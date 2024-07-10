@@ -1,11 +1,12 @@
+import BottomSheetReply from '@/components/BottomSheetReply';
 import CommentComponent from '@/components/CommentComponent';
-import ModalSheet from '@/components/ModalSheet';
 import useTheme from '@/hooks/useTheme';
 import { px } from '@/utlis/size';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
-import { Appbar, Avatar, Button, Text, TextInput } from 'react-native-paper';
+import { Appbar, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 
 
 
@@ -13,7 +14,7 @@ export default function ThreadScreen() {
   const { top } = useSafeAreaInsets()
   const { theme: { colors } } = useTheme()
 
-  const [open, setOpen] = useState(false)
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [data] = useState([
     [
       []
@@ -23,11 +24,7 @@ export default function ThreadScreen() {
   ])
 
   const onOpen = () => {
-    setOpen(true)
-  }
-
-  const onClose = () => {
-    setOpen(false)
+    bottomSheetRef.current?.present()
   }
 
   const onLike = () => {
@@ -74,35 +71,9 @@ export default function ThreadScreen() {
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
       />
-      <ModalSheet
-        style={styles.modal}
-        open={open}
-        onClose={onClose}
-      >
-        <View style={styles.row}>
-          <Text
-            variant={'titleMedium'}
-            style={{ fontSize: px(30) }}
-          >
-            Reply to
-          </Text>
-          <Avatar.Text
-            size={px(35)}
-            label={`Ag`}
-          />
-        </View>
-        <TextInput
-          multiline
-          style={{ marginTop: px(20) }}
-          placeholder={'Typing...'}
-        />
-        <Button
-          mode={'contained'}
-          onPress={() => { }}
-        >
-          Reply
-        </Button>
-      </ModalSheet>
+     <BottomSheetReply
+        bottomSheetRef={bottomSheetRef}
+      />
     </Fragment>
   );
 }
@@ -116,15 +87,5 @@ const styles = StyleSheet.create({
     padding: px(20),
     marginBottom: px(20),
     backgroundColor: 'rgba(0,0,0,.015)',
-  },
-  modal: {
-    rowGap: px(30),
-    paddingHorizontal: px(30),
-    height: px(550),
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    columnGap: px(10),
-  },
+  }
 });
