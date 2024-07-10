@@ -82,6 +82,7 @@ const ModalSheet: FC<ModalSheetProps> = (props) => {
   return (
     <Modal
       transparent
+
       statusBarTranslucent
       visible={show}
       onRequestClose={onRequestClose}

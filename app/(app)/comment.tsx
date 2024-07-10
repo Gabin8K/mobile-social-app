@@ -6,7 +6,8 @@ import useAuth from '@/hooks/useAuth';
 import { router } from 'expo-router';
 import CommentComponent from '@/components/CommentComponent';
 import ModalSheet from '@/components/ModalSheet';
-import { Fragment, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 export default function CommentModal() {
 
@@ -14,6 +15,7 @@ export default function CommentModal() {
   const { session } = useAuth();
 
   const [open, setOpen] = useState(false)
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
   const displayName = session?.user?.user_metadata?.displayName
 
@@ -59,6 +61,14 @@ export default function CommentModal() {
           ]}
         />
       </View>
+      <BottomSheet
+        ref={bottomSheetRef}
+        enablePanDownToClose
+      >
+        <BottomSheetView style={styles.modal}>
+          <Text>Awesome 🎉</Text>
+        </BottomSheetView>
+      </BottomSheet>
       <ModalSheet
         style={styles.modal}
         open={open}
@@ -100,7 +110,6 @@ const styles = StyleSheet.create({
   modal: {
     rowGap: px(30),
     paddingHorizontal: px(30),
-    height: px(550),
   },
   row: {
     flexDirection: 'row',
