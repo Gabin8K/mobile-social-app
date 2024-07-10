@@ -15,13 +15,19 @@ const BottomSheetReply = (props: Props) => {
   const { bottomSheetRef } = props;
   const { theme: { colors } } = useTheme();
 
+  const onClose = () => {
+    bottomSheetRef.current?.dismiss()
+  }
+
   return (
     <BottomSheetModalProvider>
       <BottomSheetModal
         ref={bottomSheetRef}
         index={0}
         snapPoints={['25%']}
+        onDismiss={onClose}
         enablePanDownToClose
+        enableDismissOnClose
         keyboardBehavior={'interactive'}
         handleIndicatorStyle={{ backgroundColor: colors.onSurfaceDisabled }}
         backgroundStyle={{ backgroundColor: colors.elevation.level3 }}

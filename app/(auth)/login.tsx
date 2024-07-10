@@ -1,10 +1,11 @@
 import useTheme from '@/hooks/useTheme'
+import useToast from '@/hooks/useToast'
 import supabase from '@/services/supabase'
 import { px } from '@/utlis/size'
 import { Link, router } from 'expo-router'
 import React, { useCallback, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { Button, Snackbar, Text, TextInput } from 'react-native-paper'
+import { Button, Text, TextInput } from 'react-native-paper'
 
 type Props = {}
 
@@ -18,8 +19,8 @@ const Login = (props: Props) => {
     password: '',
   })
 
+  const toast = useToast()
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
   const [show, setShow] = useState(false);
 
   const disabled = !form.email || !form.password ;
@@ -34,7 +35,7 @@ const Login = (props: Props) => {
       if (error) throw error
       router.replace('/(app)')
     } catch (err: any) {
-      setMessage(String(err.message || err))
+      toast.message(String(err.message || err))
     }
     finally {
       setLoading(false)
@@ -64,7 +65,7 @@ const Login = (props: Props) => {
           onChangeText={(text) => setForm({ ...form, password: text })}
         />
         <Button
-          disabled={disabled}
+          disabled={disabled || loading}
           style={{ marginVertical: px(40) }}
           mode={'contained'}
           onPress={onSubmit}
@@ -84,13 +85,6 @@ const Login = (props: Props) => {
           </Link>
         </Text>
       </View>
-      <Snackbar
-        visible={!!message}
-        onIconPress={() => setMessage('')}
-        onDismiss={() => setMessage('')}
-      >
-        {message}
-      </Snackbar>
     </View>
   )
 }

@@ -1,10 +1,11 @@
+import useToast from '@/hooks/useToast'
 import supabase from '@/services/supabase'
 import { px } from '@/utlis/size'
 import { makeRedirectUri } from 'expo-auth-session'
 import { router, Stack } from 'expo-router'
 import React, { Fragment, useCallback, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { Button, Snackbar, Text, TextInput } from 'react-native-paper'
+import { Button, Text, TextInput } from 'react-native-paper'
 
 type Props = {}
 
@@ -20,8 +21,8 @@ const Signup = (props: Props) => {
     displayName: '',
   })
 
+  const toast = useToast()
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
   const [show, setShow] = useState(false);
 
   const disabled = !form.email || !form.password || !form.displayName;
@@ -41,7 +42,7 @@ const Signup = (props: Props) => {
       if (error) throw error
       router.back()
     } catch (err: any) {
-      setMessage(String(err.message || err))
+      toast.message(String(err.message || err))
     }
     finally {
       setLoading(false)
@@ -85,7 +86,7 @@ const Signup = (props: Props) => {
             onChangeText={(text) => setForm({ ...form, password: text })}
           />
           <Button
-            disabled={disabled}
+            disabled={disabled || loading}
             style={{ marginVertical: px(40) }}
             mode={'contained'}
             onPress={onSubmit}
@@ -95,13 +96,6 @@ const Signup = (props: Props) => {
           </Button>
         </View>
       </View>
-      <Snackbar
-        visible={!!message}
-        onIconPress={() => setMessage('')}
-        onDismiss={() => setMessage('')}
-      >
-        {message}
-      </Snackbar>
     </Fragment>
   )
 }

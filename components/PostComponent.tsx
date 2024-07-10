@@ -1,19 +1,25 @@
-import { StyleSheet, View } from 'react-native'
 import React from 'react'
+import { StyleSheet, View, ViewProps } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utlis/size'
 import { router } from 'expo-router'
+import { ListOfPostQuery } from '@/services/supabase'
 
-type Props = {}
+type Props = ViewProps & {
+  post: ListOfPostQuery[number]
+}
 
 const PostComponent = (props: Props) => {
+  const { post, ...rest } = props
 
   const onGoToComment = () => {
     router.navigate('/(app)/comment')
   }
 
   return (
-    <View>
+    <View
+      {...rest}
+    >
       <View style={styles.row}>
         <Avatar.Text
           size={px(50)}

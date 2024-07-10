@@ -1,20 +1,26 @@
 import PostComponent from '@/components/PostComponent';
 import useAuth from '@/hooks/useAuth';
-import supabase from '@/services/supabase';
+import useToast from '@/hooks/useToast';
+import supabase, { createPost, listOfPost, ListOfPostQuery } from '@/services/supabase';
 import { px } from '@/utlis/size';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
-import { Appbar, Avatar, IconButton, TextInput, Tooltip } from 'react-native-paper';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Appbar, Avatar, IconButton, TextInput, Tooltip } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 
 export default function HomeScreen() {
   const { top } = useSafeAreaInsets()
+  const toast = useToast()
   const { session, setSession } = useAuth()
 
   const displayName = session?.user?.user_metadata?.displayName
+  const [text, setText] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [data, setData] = useState<ListOfPostQuery | null>(null)
 
   const onLogout = async () => {
     await supabase.auth.signOut()
@@ -25,6 +31,35 @@ export default function HomeScreen() {
     router.navigate('/(app)/setting')
   }
 
+  const onCreatePost = useCallback((text: string) => () => {
+    setLoading(true)
+    createPost({
+      user_id: session?.user?.id,
+      content: text,
+    })
+      .then(() => setText(''))
+      .catch(err => toast.message(String(err.message || err)))
+      .finally(() => setLoading(false))
+  }, [])
+
+
+  const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<ListOfPostQuery[number]>) {
+    return (
+      <PostComponent
+        post={item}
+        style={{ marginBottom: px(30) }}
+      />
+    )
+  }, [])
+
+
+  useEffect(() => {
+    listOfPost()
+      .then(({ data }) => setData(data))
+      .catch(err => toast.message(String(err.message || err)))
+  }, [])
+
+console.log(data)
   return (
     <View style={styles.container}>
       <Appbar.Header
@@ -62,11 +97,23 @@ export default function HomeScreen() {
           multiline
           placeholder={'What\'s up?'}
           style={{ flex: 1 }}
+          value={text}
+          onChangeText={setText}
+          right={
+            loading ?
+              <TextInput.Icon icon={() => <ActivityIndicator size={px(30)} />} /> :
+              text.trim() !== "" ?
+                <TextInput.Icon icon={'arrow-right'} onPress={onCreatePost(text)} /> :
+                null
+          }
         />
       </View>
-      <View style={styles.content}>
-        <PostComponent />
-      </View>
+      <FlatList
+        data={data}
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      />
     </View>
   );
 }
@@ -79,7 +126,6 @@ const styles = StyleSheet.create({
     marginTop: px(40),
     columnGap: px(20),
     flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: px(20),
   },
   headerRow: {
@@ -89,6 +135,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     marginTop: px(60),
-    paddingHorizontal: px(20),
+    paddingHorizontal: px(20)
   }
 });
