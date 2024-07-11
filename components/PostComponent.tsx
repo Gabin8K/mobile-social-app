@@ -4,6 +4,7 @@ import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utlis/size'
 import { router } from 'expo-router'
 import { ListOfPostQuery } from '@/services/supabase'
+import { useComment } from './CommentContext'
 
 type Props = ViewProps & {
   post: ListOfPostQuery[number]
@@ -12,8 +13,26 @@ type Props = ViewProps & {
 const PostComponent = (props: Props) => {
   const { post, ...rest } = props
 
+  const comment = useComment()
+
+  const profile = post.profiles as any
+  const avatar_name = profile.display_name.slice(0, 2)
+
   const onGoToComment = () => {
-    router.navigate('/(app)/comment')
+    router.navigate({
+      pathname: '/(app)/comment',
+      params: {
+        post_id: post.id,
+        display_name: profile.display_name,
+        comments: JSON.stringify(post.comment),
+      }
+    })
+  }
+
+  const onReply = () => {
+    comment.setProfile(profile)
+    comment.setPost(post)
+    comment.bottomSheetRef?.current?.present()
   }
 
   return (
@@ -23,21 +42,29 @@ const PostComponent = (props: Props) => {
       <View style={styles.row}>
         <Avatar.Text
           size={px(50)}
-          label={`Ag`}
+          label={avatar_name}
         />
-        <Text variant={'titleMedium'} >Antony Igor</Text>
+        <Text variant={'titleMedium'}>{profile.display_name}</Text>
       </View>
       <Card elevation={1}>
         <Card.Content>
           <Text>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, voluptates.
+            {post.content}
           </Text>
         </Card.Content>
         <View style={styles.footer}>
-          <Button>👍 12</Button>
-          <Button onPress={onGoToComment} >
-            1,2k Comments
-          </Button>
+          <Button>👍 {post.likes ?? 0}</Button>
+          <View style={styles.row2}>
+            {post.comment ?
+              <Button onPress={onGoToComment} >
+                {post.comment?.length} Comments
+              </Button> :
+              null
+            }
+            <Button onPress={onReply} >
+              Repy
+            </Button>
+          </View>
         </View>
       </Card>
     </View>
@@ -52,6 +79,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     columnGap: px(10),
     marginBottom: px(15),
+  },
+  row2: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   footer: {
     flexDirection: 'row',

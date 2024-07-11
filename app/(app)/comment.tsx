@@ -1,22 +1,20 @@
-import { StyleSheet, View } from 'react-native';
+import { FlatList, ListRenderItemInfo, StyleSheet } from 'react-native';
 import { Appbar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { px } from '@/utlis/size';
-import useAuth from '@/hooks/useAuth';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import CommentComponent from '@/components/CommentComponent';
-import { Fragment, useRef } from 'react';
+import { Fragment, useMemo, useRef } from 'react';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import BottomSheetReply from '@/components/BottomSheetReply';
+import BottomSheetReplyPost from '@/components/BottomSheetReplyPost';
+import { ListOfPostQuery } from '@/services/supabase';
 
 export default function CommentModal() {
 
   const { top } = useSafeAreaInsets()
-  const { session } = useAuth();
-
+  const { post_id, display_name, ...params } = useLocalSearchParams()
+  const comments = JSON.parse(params.comments as string)
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-
-  const displayName = session?.user?.user_metadata?.displayName
 
   const onGoback = () => {
     router.back()
@@ -30,6 +28,16 @@ export default function CommentModal() {
     console.log('Like')
   }
 
+  const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<ListOfPostQuery[number]['comment'][number]>) {
+    return (
+      <CommentComponent
+        comment={item}
+        onReply={onOpen}
+        onLike={onLike}
+      />
+    )
+  },[])
+
   return (
     <Fragment>
       <Appbar.Header
@@ -39,24 +47,17 @@ export default function CommentModal() {
       >
         <Appbar.BackAction onPress={onGoback} />
         <Appbar.Content
-          title={`Reply to ${displayName}`}
+          title={`Reply to ${display_name}`}
           titleStyle={{ fontSize: px(35) }}
         />
       </Appbar.Header>
-      <View style={styles.container}>
-        <CommentComponent
-          onLike={onLike}
-          onReply={onOpen}
-          comments={[
-            [
-              // [
-              //   []
-              // ]
-            ]
-          ]}
-        />
-      </View>
-      <BottomSheetReply
+      <FlatList
+        data={comments}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        renderItem={renderItem}
+      />
+      <BottomSheetReplyPost
         bottomSheetRef={bottomSheetRef}
       />
     </Fragment>
@@ -66,6 +67,6 @@ export default function CommentModal() {
 const styles = StyleSheet.create({
   container: {
     marginTop: px(40),
-    marginHorizontal: px(20),
+    paddingHorizontal: px(20),
   },
 })

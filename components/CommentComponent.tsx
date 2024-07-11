@@ -1,18 +1,37 @@
-import React, { memo } from 'react'
+import React, { memo, useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utlis/size'
 import useTheme from '@/hooks/useTheme'
+import { getCommentById, ListOfPostQuery } from '@/services/supabase'
+import useToast from '@/hooks/useToast'
 
 type Props = {
   onLike?: () => void,
   onReply?: () => void,
-  comments?: any[],
+  parent_id?: string,
+  comment?: ListOfPostQuery[number]['comment'][number],
 }
 
 const CommentComponent = memo(function CommentComponent(props: Props) {
-  const { comments, onReply, onLike } = props
+  const { parent_id, comment, onReply, onLike } = props
+
+  const toast = useToast()
   const { theme: { colors } } = useTheme()
+
+  const [subComments, setSubComments] = useState<any>(null)
+
+  useEffect(() => {
+    if (parent_id) {
+      getCommentById(parent_id)
+        .then(({ data, error }) => {
+          if (error) throw error
+          setSubComments(data)
+        })
+        .catch(err => toast.message(String(err.message || err)))
+    }
+  }, [])
+
 
   return (
     <View>
@@ -59,11 +78,8 @@ const CommentComponent = memo(function CommentComponent(props: Props) {
         </Text>
         <View style={[styles.shape2, { borderColor: colors.elevation.level3 }]} />
       </View>
-      {comments?.map((comment, index) => (
-        <View
-          key={index}
-          style={styles.child}
-        >
+      {parent_id ?
+        <View style={styles.child}>
           <View
             style={[
               styles.shape2,
@@ -74,11 +90,15 @@ const CommentComponent = memo(function CommentComponent(props: Props) {
             ]}
           />
           {Array.isArray(comment) ?
-            <CommentComponent comments={comment} /> :
+            <CommentComponent
+              comment={subComments}
+              parent_id={comment[0].parent_id}
+            /> :
             <CommentComponent />
           }
-        </View>
-      ))}
+        </View> :
+        null
+      }
       <View style={styles.row3}>
         <View style={[styles.shape1, { borderColor: colors.elevation.level3 }]} />
         <Button

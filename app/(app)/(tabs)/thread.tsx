@@ -1,4 +1,4 @@
-import BottomSheetReply from '@/components/BottomSheetReply';
+import BottomSheetReplyComment from '@/components/BottomSheetReplyComment';
 import CommentComponent from '@/components/CommentComponent';
 import useTheme from '@/hooks/useTheme';
 import { px } from '@/utlis/size';
@@ -71,7 +71,7 @@ export default function ThreadScreen() {
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
       />
-     <BottomSheetReply
+     <BottomSheetReplyComment
         bottomSheetRef={bottomSheetRef}
       />
     </Fragment>

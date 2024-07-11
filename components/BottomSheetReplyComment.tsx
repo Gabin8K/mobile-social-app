@@ -5,14 +5,16 @@ import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/typ
 import { px } from '@/utlis/size';
 import { Avatar, Button, Text, TextInput } from 'react-native-paper';
 import useTheme from '@/hooks/useTheme';
+import { useComment } from './CommentContext';
 
 
 type Props = {
   bottomSheetRef: React.RefObject<BottomSheetModalMethods>
 }
 
-const BottomSheetReply = (props: Props) => {
+const BottomSheetReplyComment = (props: Props) => {
   const { bottomSheetRef } = props;
+  const comment = useComment()
   const { theme: { colors } } = useTheme();
 
   const onClose = () => {
@@ -63,7 +65,7 @@ const BottomSheetReply = (props: Props) => {
   )
 }
 
-export default memo(BottomSheetReply)
+export default memo(BottomSheetReplyComment)
 
 const styles = StyleSheet.create({
   modal: {

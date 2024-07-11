@@ -12,36 +12,36 @@ export type Database = {
     Tables: {
       comment: {
         Row: {
-          comment_id: string | null
           content: string | null
           created_at: string | null
           id: string
           likes: number | null
+          parent_id: string | null
           post_id: string
           user_id: string
         }
         Insert: {
-          comment_id?: string | null
           content?: string | null
           created_at?: string | null
           id?: string
           likes?: number | null
+          parent_id?: string | null
           post_id: string
           user_id: string
         }
         Update: {
-          comment_id?: string | null
           content?: string | null
           created_at?: string | null
           id?: string
           likes?: number | null
+          parent_id?: string | null
           post_id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "comment_comment_id_fkey"
-            columns: ["comment_id"]
+            foreignKeyName: "comment_parent_id_fkey"
+            columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "comment"
             referencedColumns: ["id"]

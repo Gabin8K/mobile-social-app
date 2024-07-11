@@ -1,11 +1,14 @@
+import BottomSheetReplyPost from '@/components/BottomSheetReplyPost';
+import CommentProvider from '@/components/CommentContext';
 import PostComponent from '@/components/PostComponent';
 import useAuth from '@/hooks/useAuth';
 import useToast from '@/hooks/useToast';
 import supabase, { createPost, listOfPost, ListOfPostQuery } from '@/services/supabase';
 import { px } from '@/utlis/size';
 import { Ionicons } from '@expo/vector-icons';
+import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Appbar, Avatar, IconButton, TextInput, Tooltip } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +19,8 @@ export default function HomeScreen() {
   const { top } = useSafeAreaInsets()
   const toast = useToast()
   const { session, setSession } = useAuth()
+
+  const bottomSheetRef = useRef<BottomSheetModalMethods>(null)
 
   const displayName = session?.user?.user_metadata?.displayName
   const [text, setText] = useState('')
@@ -37,7 +42,10 @@ export default function HomeScreen() {
       user_id: session?.user?.id,
       content: text,
     })
-      .then(() => setText(''))
+      .then((error) =>{
+        if (error) throw error
+        setText('')
+      })
       .catch(err => toast.message(String(err.message || err)))
       .finally(() => setLoading(false))
   }, [])
@@ -59,62 +67,69 @@ export default function HomeScreen() {
       .catch(err => toast.message(String(err.message || err)))
   }, [])
 
-console.log(data)
+
   return (
-    <View style={styles.container}>
-      <Appbar.Header
-        elevated
-        mode={'small'}
-        style={{ marginTop: -top }}
-      >
-        <Appbar.Content
-          title="Comment's"
-          titleStyle={{ fontSize: px(35) }}
-        />
-        <View style={styles.headerRow}>
-          <Tooltip title={'Setting'}>
-            <IconButton
-              icon={(props) => <Ionicons name={'settings'} {...props} />}
-              size={px(40)}
-              onPress={onGoToSetting}
-            />
-          </Tooltip>
-          <Tooltip title={'Logout'}>
-            <IconButton
-              icon={(props) => <Ionicons name={'log-out'} {...props} />}
-              size={px(40)}
-              onPress={onLogout}
-            />
-          </Tooltip>
+    <CommentProvider
+      bottomSheetRef={bottomSheetRef}
+    >
+      <View style={styles.container}>
+        <Appbar.Header
+          elevated
+          mode={'small'}
+          style={{ marginTop: -top }}
+        >
+          <Appbar.Content
+            title="Comment's"
+            titleStyle={{ fontSize: px(35) }}
+          />
+          <View style={styles.headerRow}>
+            <Tooltip title={'Setting'}>
+              <IconButton
+                icon={(props) => <Ionicons name={'settings'} {...props} />}
+                size={px(40)}
+                onPress={onGoToSetting}
+              />
+            </Tooltip>
+            <Tooltip title={'Logout'}>
+              <IconButton
+                icon={(props) => <Ionicons name={'log-out'} {...props} />}
+                size={px(40)}
+                onPress={onLogout}
+              />
+            </Tooltip>
+          </View>
+        </Appbar.Header>
+        <View style={styles.row}>
+          <Avatar.Text
+            size={px(100)}
+            label={`${displayName?.charAt?.(0) ?? ''}${displayName?.charAt?.(1) ?? ''}`}
+          />
+          <TextInput
+            multiline
+            placeholder={'What\'s up?'}
+            style={{ flex: 1 }}
+            value={text}
+            onChangeText={setText}
+            right={
+              loading ?
+                <TextInput.Icon icon={() => <ActivityIndicator size={px(30)} />} /> :
+                text.trim() !== "" ?
+                  <TextInput.Icon icon={'arrow-right'} onPress={onCreatePost(text)} /> :
+                  null
+            }
+          />
         </View>
-      </Appbar.Header>
-      <View style={styles.row}>
-        <Avatar.Text
-          size={px(100)}
-          label={`${displayName?.charAt?.(0) ?? ''}${displayName?.charAt?.(1) ?? ''}`}
+        <FlatList
+          data={data}
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.content}
         />
-        <TextInput
-          multiline
-          placeholder={'What\'s up?'}
-          style={{ flex: 1 }}
-          value={text}
-          onChangeText={setText}
-          right={
-            loading ?
-              <TextInput.Icon icon={() => <ActivityIndicator size={px(30)} />} /> :
-              text.trim() !== "" ?
-                <TextInput.Icon icon={'arrow-right'} onPress={onCreatePost(text)} /> :
-                null
-          }
+        <BottomSheetReplyPost
+          bottomSheetRef={bottomSheetRef}
         />
       </View>
-      <FlatList
-        data={data}
-        renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-      />
-    </View>
+    </CommentProvider>
   );
 }
 

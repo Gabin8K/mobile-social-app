@@ -34,23 +34,41 @@ export const createPost = async (post: Partial<Tables<'post'>>) => {
   };
 }
 
-const listOfPostQuery = supabase.from('profiles').select(`
+
+
+export const createComment = async (comment: Partial<Tables<'comment'>>) => {
+  const { data, error } = await supabase.from('comment').insert(comment)
+    .select();
+  return {
+    data,
+    error,
+  };
+}
+
+
+const listOfPostQuery = supabase.from('post').select(`
   id,
-  display_name,
-  post(
+  likes,
+  content,
+  created_at,
+  profiles (
     id,
+    email,
+    display_name
+  ),
+  comment (
+    id,
+    parent_id,
     content,
-    created_at,
-    comment(
+    profiles (
       id,
-      content,
-      created_at
+      email,
+      display_name
     )
   )
 `);
 
 export type ListOfPostQuery = QueryData<typeof listOfPostQuery>;
-
 export const listOfPost = async () => {
   const { data, error } = await listOfPostQuery;
   return {
@@ -58,5 +76,30 @@ export const listOfPost = async () => {
     error,
   };
 }
+
+
+
+const getComment = (id: string) => supabase.from('comment').select(`
+  id,
+  parent_id,
+  content,
+  profiles (
+    id,
+    email,
+    display_name
+  )
+`).eq('id', id);
+
+export type GetComment = QueryData<ReturnType<typeof getComment>>;
+export const getCommentById = async (id: string) => {
+  const { data, error } = await getComment(id);
+  return {
+    data,
+    error,
+  };
+}
+
+
+
 
 export default supabase;
