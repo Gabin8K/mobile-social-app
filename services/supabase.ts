@@ -46,6 +46,16 @@ export const createComment = async (comment: Partial<Tables<'comment'>>) => {
 }
 
 
+export const createRepy = async (comment: Partial<Tables<'comment'>>) => {
+  const { data, error } = await supabase.from('comment').insert(comment)
+    .select();
+  return {
+    data,
+    error,
+  };
+}
+
+
 const listOfPostQuery = supabase.from('post').select(`
   id,
   likes,
@@ -56,7 +66,7 @@ const listOfPostQuery = supabase.from('post').select(`
     email,
     display_name
   ),
-  comment (
+  comment(
     id,
     parent_id,
     content,
@@ -66,7 +76,10 @@ const listOfPostQuery = supabase.from('post').select(`
       display_name
     )
   )
-`);
+`)
+.is('comment.parent_id', null);
+
+
 
 export type ListOfPostQuery = QueryData<typeof listOfPostQuery>;
 export const listOfPost = async () => {
@@ -79,19 +92,25 @@ export const listOfPost = async () => {
 
 
 
-const getComment = (id: string) => supabase.from('comment').select(`
+const getComment = (post_id: string) => supabase.from('comment').select(`
   id,
   parent_id,
   content,
+  likes,
+  created_at,
   profiles (
     id,
     email,
     display_name
   )
-`).eq('id', id);
+`)
+  .eq('post_id', post_id)
+  .is('parent_id', null);
 
 export type GetComment = QueryData<ReturnType<typeof getComment>>;
+
 export const getCommentById = async (id: string) => {
+
   const { data, error } = await getComment(id);
   return {
     data,

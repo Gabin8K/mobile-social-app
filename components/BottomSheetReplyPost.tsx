@@ -23,8 +23,6 @@ const BottomSheetReplyPost = (props: Props) => {
   const { session } = useAuth()
   const { theme: { colors } } = useTheme();
 
-  const displayName = comment.profile?.display_name?.slice(0, 2) ?? ''
-
   const [loading, setLoading] = useState(false)
   const [text, setText] = useState('')
 

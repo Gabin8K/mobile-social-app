@@ -23,8 +23,7 @@ const PostComponent = (props: Props) => {
       pathname: '/(app)/comment',
       params: {
         post_id: post.id,
-        display_name: profile.display_name,
-        comments: JSON.stringify(post.comment),
+        display_name: profile.display_name
       }
     })
   }

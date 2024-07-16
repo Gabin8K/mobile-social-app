@@ -1,37 +1,33 @@
-import React, { memo, useEffect, useState } from 'react'
+import React, { memo, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utlis/size'
 import useTheme from '@/hooks/useTheme'
-import { getCommentById, ListOfPostQuery } from '@/services/supabase'
-import useToast from '@/hooks/useToast'
+import { GetComment } from '@/services/supabase'
+import { useReply } from './ReplyContext'
 
 type Props = {
   onLike?: () => void,
-  onReply?: () => void,
   parent_id?: string,
-  comment?: ListOfPostQuery[number]['comment'][number],
+  comment?: GetComment[number],
 }
 
-const CommentComponent = memo(function CommentComponent(props: Props) {
-  const { parent_id, comment, onReply, onLike } = props
-
-  const toast = useToast()
+const ReplyComponent = memo(function ReplyComponent(props: Props) {
+  const { parent_id, comment, onLike } = props
   const { theme: { colors } } = useTheme()
 
   const [subComments, setSubComments] = useState<any>(null)
 
-  useEffect(() => {
-    if (parent_id) {
-      getCommentById(parent_id)
-        .then(({ data, error }) => {
-          if (error) throw error
-          setSubComments(data)
-        })
-        .catch(err => toast.message(String(err.message || err)))
-    }
-  }, [])
+  const reply = useReply()
 
+  const profile = comment?.profiles as any
+  const avatar_name = profile.display_name.slice(0, 2)
+
+  const onReply = () => {
+    reply?.setProfile(profile)
+    reply?.setParentId(comment?.id)
+    reply?.bottomSheetRef?.current?.present()
+  }
 
   return (
     <View>
@@ -39,7 +35,7 @@ const CommentComponent = memo(function CommentComponent(props: Props) {
         <View style={styles.leftContainer}>
           <Avatar.Text
             size={px(50)}
-            label={`Ag`}
+            label={avatar_name}
           />
           <View style={[styles.divider, { backgroundColor: colors.elevation.level3 }]} />
         </View>
@@ -47,18 +43,20 @@ const CommentComponent = memo(function CommentComponent(props: Props) {
           <Card elevation={1}>
             <Card.Content>
               <Text>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, voluptates.
+                {comment?.content}
               </Text>
             </Card.Content>
           </Card>
           <View style={styles.footer}>
             <View style={styles.row2}>
-              <Text style={{ color: colors.tertiary }} >10min</Text>
+              <Text style={{ color: colors.tertiary }}>
+                {new Date(comment?.created_at).toString().split(' ').slice(0, 5).join(' ')}
+              </Text>
               <Button
                 textColor={colors.tertiary}
                 onPress={onLike}
               >
-                👍 12
+                👍 {comment?.likes ?? 0}
               </Button>
             </View>
             <Button onPress={onReply} >
@@ -90,11 +88,11 @@ const CommentComponent = memo(function CommentComponent(props: Props) {
             ]}
           />
           {Array.isArray(comment) ?
-            <CommentComponent
+            <ReplyComponent
               comment={subComments}
               parent_id={comment[0].parent_id}
             /> :
-            <CommentComponent />
+            <ReplyComponent />
           }
         </View> :
         null
@@ -112,7 +110,7 @@ const CommentComponent = memo(function CommentComponent(props: Props) {
   )
 })
 
-export default CommentComponent
+export default ReplyComponent
 
 const styles = StyleSheet.create({
   row: {

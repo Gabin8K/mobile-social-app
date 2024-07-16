@@ -3,43 +3,49 @@ import { Appbar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { px } from '@/utlis/size';
 import { router, useLocalSearchParams } from 'expo-router';
-import CommentComponent from '@/components/CommentComponent';
-import { Fragment, useMemo, useRef } from 'react';
+import ReplyComponent from '@/components/ReplyComponent';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import BottomSheetReplyPost from '@/components/BottomSheetReplyPost';
-import { ListOfPostQuery } from '@/services/supabase';
+import { GetComment, getCommentById } from '@/services/supabase';
+import ReplyProvider from '@/components/ReplyContext';
+import BottomSheetReplyComment from '@/components/BottomSheetReplyComment';
 
 export default function CommentModal() {
 
   const { top } = useSafeAreaInsets()
-  const { post_id, display_name, ...params } = useLocalSearchParams()
-  const comments = JSON.parse(params.comments as string)
+  const { post_id, display_name } = useLocalSearchParams()
+  const [comments, setComments] = useState<GetComment>([])
   const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const onGoback = () => {
     router.back()
   }
 
-  const onOpen = () => {
-    bottomSheetRef.current?.present()
-  }
-
   const onLike = () => {
     console.log('Like')
   }
 
-  const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<ListOfPostQuery[number]['comment'][number]>) {
+  const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<GetComment[number]>) {
     return (
-      <CommentComponent
+      <ReplyComponent
         comment={item}
-        onReply={onOpen}
         onLike={onLike}
       />
     )
-  },[])
+  }, [])
+
+  useEffect(() => {
+    getCommentById(post_id as string).then(({ data }) => {
+      if(!data) return
+      setComments(data)
+    })
+  }, [])
+  
 
   return (
-    <Fragment>
+    <ReplyProvider
+      bottomSheetRef={bottomSheetRef}
+    >
       <Appbar.Header
         elevated
         mode={'small'}
@@ -57,10 +63,10 @@ export default function CommentModal() {
         showsVerticalScrollIndicator={false}
         renderItem={renderItem}
       />
-      <BottomSheetReplyPost
+      <BottomSheetReplyComment
         bottomSheetRef={bottomSheetRef}
       />
-    </Fragment>
+    </ReplyProvider>
   );
 }
 

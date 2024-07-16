@@ -42,7 +42,7 @@ export default function HomeScreen() {
       user_id: session?.user?.id,
       content: text,
     })
-      .then((error) =>{
+      .then(({error}) =>{
         if (error) throw error
         setText('')
       })
@@ -148,8 +148,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   content: {
-    flex: 1,
-    marginTop: px(60),
+    paddingTop: px(60),
     paddingHorizontal: px(20)
   }
 });

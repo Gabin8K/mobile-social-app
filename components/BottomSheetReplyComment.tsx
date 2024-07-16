@@ -1,11 +1,15 @@
 import { StyleSheet, View } from 'react-native'
-import React, { memo } from 'react'
+import React, { memo, useCallback, useState } from 'react'
 import { BottomSheetModal, BottomSheetModalProvider, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { px } from '@/utlis/size';
 import { Avatar, Button, Text, TextInput } from 'react-native-paper';
 import useTheme from '@/hooks/useTheme';
-import { useComment } from './CommentContext';
+import { useReply } from './ReplyContext';
+import useToast from '@/hooks/useToast';
+import { createRepy } from '@/services/supabase';
+import useAuth from '@/hooks/useAuth';
+import { useLocalSearchParams } from 'expo-router';
 
 
 type Props = {
@@ -14,12 +18,36 @@ type Props = {
 
 const BottomSheetReplyComment = (props: Props) => {
   const { bottomSheetRef } = props;
-  const comment = useComment()
   const { theme: { colors } } = useTheme();
+
+  const { session } = useAuth()
+  const reply = useReply()
+  const toast = useToast()
+  const { post_id } = useLocalSearchParams()
+
+  const [loading, setLoading] = useState(false)
+  const [text, setText] = useState('')
 
   const onClose = () => {
     bottomSheetRef.current?.dismiss()
   }
+
+  const onSubmit = useCallback(() => {
+    setLoading(true)
+    createRepy({
+      content: text,
+      user_id: session?.user.id,
+      parent_id: reply.parent_id as string,
+      post_id: post_id as string,
+    })
+      .then(({ error }) => {
+        if (error) throw error
+        setText('')
+        onClose()
+      })
+      .catch(err => toast.message(String(err.message || err)))
+      .finally(() => setLoading(false))
+  }, [text, reply])
 
   return (
     <BottomSheetModalProvider>
@@ -44,18 +72,22 @@ const BottomSheetReplyComment = (props: Props) => {
             </Text>
             <Avatar.Text
               size={px(35)}
-              label={`Ag`}
+              label={reply?.profile?.display_name?.slice(0, 2) ?? ''}
             />
           </View>
           <TextInput
             multiline
+            value={text}
+            onChangeText={setText}
             style={{ marginTop: px(20) }}
             placeholder={'Typing...'}
             render={innerProps => <BottomSheetTextInput {...innerProps as any} />}
           />
           <Button
             mode={'contained'}
-            onPress={() => { }}
+            onPress={onSubmit}
+            loading={loading}
+            disabled={text.trim().length === 0 || loading}
           >
             Reply
           </Button>
