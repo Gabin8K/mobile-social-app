@@ -4,18 +4,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { px } from '@/utlis/size';
 import { router, useLocalSearchParams } from 'expo-router';
 import ReplyComponent from '@/components/ReplyComponent';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { useEffect, useMemo, useState } from 'react';
 import { GetComment, getCommentById } from '@/services/supabase';
 import ReplyProvider from '@/components/ReplyContext';
-import BottomSheetReplyComment from '@/components/BottomSheetReplyComment';
+import ReplyModal from '@/components/ReplyModal';
 
 export default function CommentModal() {
 
   const { top } = useSafeAreaInsets()
   const { post_id, display_name } = useLocalSearchParams()
   const [comments, setComments] = useState<GetComment>([])
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
 
   const onGoback = () => {
     router.back()
@@ -25,27 +23,26 @@ export default function CommentModal() {
     console.log('Like')
   }
 
-  const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<GetComment[number]>) {
+  const renderItem = useMemo(() => function ListItem({ item, index }: ListRenderItemInfo<GetComment[number]>) {
     return (
       <ReplyComponent
         comment={item}
         onLike={onLike}
+        last={index === comments.length - 1}
       />
     )
-  }, [])
+  }, [comments])
 
   useEffect(() => {
     getCommentById(post_id as string).then(({ data }) => {
-      if(!data) return
+      if (!data) return
       setComments(data)
     })
   }, [])
-  
+
 
   return (
-    <ReplyProvider
-      bottomSheetRef={bottomSheetRef}
-    >
+    <ReplyProvider>
       <Appbar.Header
         elevated
         mode={'small'}
@@ -63,16 +60,14 @@ export default function CommentModal() {
         showsVerticalScrollIndicator={false}
         renderItem={renderItem}
       />
-      <BottomSheetReplyComment
-        bottomSheetRef={bottomSheetRef}
-      />
+      <ReplyModal />
     </ReplyProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: px(40),
+    marginTop: px(20),
     paddingHorizontal: px(20),
   },
 })

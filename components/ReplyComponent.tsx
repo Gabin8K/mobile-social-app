@@ -1,38 +1,60 @@
-import React, { memo, useState } from 'react'
+import React, { memo, useEffect, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utlis/size'
 import useTheme from '@/hooks/useTheme'
-import { GetComment } from '@/services/supabase'
+import { GetComment, GetRecursiveComment, getRecursiveCommentById } from '@/services/supabase'
 import { useReply } from './ReplyContext'
+import { timeSince } from '@/utlis/date'
 
 type Props = {
   onLike?: () => void,
-  parent_id?: string,
   comment?: GetComment[number],
+  count?: number,
+  last?: boolean,
+}
+
+type SubComment = {
+  comment?: GetRecursiveComment | GetRecursiveComment[number],
+  count?: number,
 }
 
 const ReplyComponent = memo(function ReplyComponent(props: Props) {
-  const { parent_id, comment, onLike } = props
+  const { comment, count = 0, last, onLike } = props
   const { theme: { colors } } = useTheme()
 
-  const [subComments, setSubComments] = useState<any>(null)
-
   const reply = useReply()
+  const [subComments, setSubComments] = useState<SubComment | null>(null)
 
   const profile = comment?.profiles as any
-  const avatar_name = profile.display_name.slice(0, 2)
+  const avatar_name = profile?.display_name?.slice(0, 2)
 
   const onReply = () => {
     reply?.setProfile(profile)
     reply?.setParentId(comment?.id)
-    reply?.bottomSheetRef?.current?.present()
   }
+
+  useEffect(() => {
+    if (comment) {
+      getRecursiveCommentById(comment.id).then(({ data, count }) => {
+        if (!data) return
+        setSubComments({
+          count: count ?? 0,
+          comment: data
+        })
+      })
+    }
+  }, [])
+
 
   return (
     <View>
       <View style={styles.row}>
         <View style={styles.leftContainer}>
+          {comment?.parent_id ?
+            <View style={[styles.shape3, { borderColor: colors.elevation.level3 }]} /> :
+            null
+          }
           <Avatar.Text
             size={px(50)}
             label={avatar_name}
@@ -50,7 +72,7 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
           <View style={styles.footer}>
             <View style={styles.row2}>
               <Text style={{ color: colors.tertiary }}>
-                {new Date(comment?.created_at).toString().split(' ').slice(0, 5).join(' ')}
+                {timeSince(new Date(comment?.created_at))}
               </Text>
               <Button
                 textColor={colors.tertiary}
@@ -72,40 +94,51 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
           label={`Tg`}
         />
         <Text style={{ fontSize: px(22) }}>
-          Lorem ipsum dolor sit...
+          {' '}Lorem ipsum dolor sit...
         </Text>
-        <View style={[styles.shape2, { borderColor: colors.elevation.level3 }]} />
+        {!last ?
+          <View style={[styles.shape2, { borderColor: colors.elevation.level3 }]} /> :
+          null
+        }
       </View>
-      {parent_id ?
+      {subComments ?
         <View style={styles.child}>
           <View
             style={[
               styles.shape2,
               {
                 borderColor: colors.elevation.level3,
-                height: '105%'
+                height: '110%'
               }
             ]}
           />
-          {Array.isArray(comment) ?
-            <ReplyComponent
-              comment={subComments}
-              parent_id={comment[0].parent_id}
-            /> :
-            <ReplyComponent />
+          {Array.isArray(subComments?.comment) ?
+            subComments?.comment.map((comment, index) => (
+              <ReplyComponent
+                key={comment.id}
+                comment={comment}
+                count={subComments.count}
+                // @ts-ignore
+                last={index === (subComments?.comment?.length) - 1}
+              />
+            )) :
+            <ReplyComponent comment={subComments.comment as GetRecursiveComment[number]} />
           }
         </View> :
         null
       }
-      <View style={styles.row3}>
-        <View style={[styles.shape1, { borderColor: colors.elevation.level3 }]} />
-        <Button
-          labelStyle={{ marginLeft: 0 }}
-          onPress={() => { }}
-        >
-          See 12 more comments
-        </Button>
-      </View>
+      {(count > 1) ?
+        <View style={styles.row3}>
+          <View style={[styles.shape1, { borderColor: colors.elevation.level3 }]} />
+          <Button
+            labelStyle={{ marginLeft: 0 }}
+            onPress={() => { }}
+          >
+            See 12 more comments
+          </Button>
+        </View> :
+        null
+      }
     </View>
   )
 })
@@ -116,6 +149,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     columnGap: px(10),
+    paddingTop: px(20),
   },
   leftContainer: {
     alignItems: 'center',
@@ -138,7 +172,6 @@ const styles = StyleSheet.create({
   row3: {
     flexDirection: 'row',
     alignItems: 'center',
-    columnGap: px(10),
     paddingLeft: px(24),
   },
   shape1: {
@@ -149,17 +182,26 @@ const styles = StyleSheet.create({
     borderBottomWidth: px(2),
     borderBottomLeftRadius: px(10),
   },
+  shape3: {
+    top: 0,
+    position: 'absolute',
+    width: px(25),
+    height: px(25),
+    left: px(-25),
+    borderLeftWidth: px(2),
+    borderBottomWidth: px(2),
+    borderBottomLeftRadius: px(10),
+  },
   shape2: {
     top: 0,
     left: px(24),
     width: px(20),
-    height: '100%',
+    height: '150%',
     position: 'absolute',
     alignSelf: 'flex-end',
     borderLeftWidth: px(2),
   },
   child: {
     paddingLeft: px(50),
-    paddingTop: px(20),
   }
 })

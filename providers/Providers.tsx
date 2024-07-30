@@ -3,13 +3,11 @@ import ConfigProvider from "./ConfigProvider";
 import MD3ThemeProvider from "./MD3ThemeProvider";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import AuthProvider from "./AuthProvider";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ToastProvider from "./ToastProvider";
 
 const Providers: FunctionComponent<PropsWithChildren> = ({ children }) => {
   return (
     <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }}>
           <ConfigProvider>
             <ToastProvider>
@@ -21,7 +19,6 @@ const Providers: FunctionComponent<PropsWithChildren> = ({ children }) => {
             </ToastProvider>
           </ConfigProvider>
         </SafeAreaView>
-      </GestureHandlerRootView>
     </SafeAreaProvider>
   )
 }

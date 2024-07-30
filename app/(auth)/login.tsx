@@ -75,7 +75,7 @@ const Login = (props: Props) => {
         </Button>
         <Text>
           Don't have an account?
-          <Link href={'/(auth)/signup'}>
+          <Link href={'/signup'}>
             <Text
               variant={'labelMedium'}
               style={{ color: colors.primary }}

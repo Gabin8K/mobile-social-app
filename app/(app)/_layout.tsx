@@ -21,7 +21,7 @@ export default function AppLayout() {
   }, [colors])
 
   if (!session) {
-    return <Redirect href={'/(auth)/login'} />
+    return <Redirect href={'/login'} />
   }
 
 

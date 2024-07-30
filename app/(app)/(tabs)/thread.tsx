@@ -1,15 +1,14 @@
-import BottomSheetReplyComment from '@/components/BottomSheetReplyComment';
+
 import PostComponent from '@/components/PostComponent';
 import useTheme from '@/hooks/useTheme';
 import { px } from '@/utlis/size';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
 import { Appbar, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import CommentProvider from '@/components/CommentContext';
 import { listOfPost, ListOfPostQuery } from '@/services/supabase';
 import useToast from '@/hooks/useToast';
+import useBackhandler from '@/hooks/useBackhandler';
 
 
 
@@ -18,8 +17,7 @@ export default function ThreadScreen() {
   const { theme: { colors } } = useTheme()
   const toast = useToast()
 
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
-
+  const [showBackHandlerId, setShowBackHandlerId] = useState<string>()
   const [data, setData] = useState<ListOfPostQuery | null>(null)
 
 
@@ -28,10 +26,21 @@ export default function ThreadScreen() {
       <View style={styles.item}>
         <PostComponent
           post={item}
+          show={showBackHandlerId === item.id}
+          onShow={setShowBackHandlerId}
         />
       </View>
     )
-  }, [])
+  }, [showBackHandlerId])
+
+
+  useBackhandler(() => {
+    if (showBackHandlerId) {
+      setShowBackHandlerId(undefined)
+      return true
+    }
+    return false
+  })
 
   useEffect(() => {
     listOfPost()
@@ -41,9 +50,7 @@ export default function ThreadScreen() {
 
 
   return (
-    <CommentProvider
-      bottomSheetRef={bottomSheetRef}
-    >
+    <>
       <Appbar.Header
         elevated
         mode={'small'}
@@ -61,7 +68,7 @@ export default function ThreadScreen() {
           marginLeft: px(20),
         }}
       >
-        2K Replies on your post
+        {data?.length??0} Replies on your post
       </Text>
       <FlatList
         data={data}
@@ -69,10 +76,7 @@ export default function ThreadScreen() {
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
       />
-     <BottomSheetReplyComment
-        bottomSheetRef={bottomSheetRef}
-      />
-    </CommentProvider>
+    </>
   );
 }
 

@@ -1,18 +1,15 @@
 import { createContext, useContext, useState } from "react";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { Tables } from "@/services/type";
 
 type ReplyContextType = {
   parent_id?: string,
   profile?: Tables<'profiles'>,
-  bottomSheetRef?: React.RefObject<BottomSheetModal>,
-  setParentId: (id: string) => void,
-  setProfile: (profile: ReplyContextType['profile']) => void
+  setParentId: (id?: string) => void,
+  setProfile: (profile?: ReplyContextType['profile']) => void
 }
 
 type Props = {
   children: React.ReactNode,
-  bottomSheetRef: React.RefObject<BottomSheetModal>
 }
 
 export const ReplyContext = createContext<ReplyContextType>({
@@ -31,8 +28,7 @@ export default function ReplyProvider(props: Props) {
         parent_id,
         profile,
         setParentId,
-        setProfile,
-        bottomSheetRef: props.bottomSheetRef,
+        setProfile
       }}
     >
       {props.children}

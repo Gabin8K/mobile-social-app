@@ -77,8 +77,7 @@ const listOfPostQuery = supabase.from('post').select(`
     )
   )
 `)
-.is('comment.parent_id', null);
-
+  .is('comment.parent_id', null);
 
 
 export type ListOfPostQuery = QueryData<typeof listOfPostQuery>;
@@ -107,13 +106,41 @@ const getComment = (post_id: string) => supabase.from('comment').select(`
   .eq('post_id', post_id)
   .is('parent_id', null);
 
-export type GetComment = QueryData<ReturnType<typeof getComment>>;
 
+export type GetComment = QueryData<ReturnType<typeof getComment>>;
 export const getCommentById = async (id: string) => {
 
-  const { data, error } = await getComment(id);
+  const { data, count, error } = await getComment(id);
   return {
     data,
+    count,
+    error,
+  };
+}
+
+
+const getRecursiveComment = (parent_id: string) => supabase.from('comment').select(`
+  id,
+  parent_id,
+  content,
+  likes,
+  created_at,
+  profiles (
+    id,
+    email,
+    display_name
+  )
+`)
+  .eq('parent_id', parent_id);
+
+
+export type GetRecursiveComment = QueryData<ReturnType<typeof getRecursiveComment>>;
+export const getRecursiveCommentById = async (id: string) => {
+
+  const { data, count, error } = await getRecursiveComment(id);
+  return {
+    data,
+    count,
     error,
   };
 }
