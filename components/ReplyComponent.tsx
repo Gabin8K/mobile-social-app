@@ -1,5 +1,5 @@
-import React, { memo, useEffect, useState } from 'react'
-import { StyleSheet, View } from 'react-native'
+import React, { memo, useEffect, useMemo, useState } from 'react'
+import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utlis/size'
 import useTheme from '@/hooks/useTheme'
@@ -32,6 +32,19 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
     reply?.setProfile(profile)
     reply?.setParentId(comment?.id)
   }
+
+
+  const renderItem = useMemo(() => function ListItem({ item, index }: ListRenderItemInfo<SubComment['comment']>) {
+    const itemComment = item as GetRecursiveComment[number]
+    return (
+      <ReplyComponent
+        key={itemComment.id}
+        comment={itemComment}
+        count={subComments?.count}
+      />
+    )
+  }, [subComments])
+
 
   useEffect(() => {
     if (comment) {
@@ -99,14 +112,10 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
       {subComments ?
         <View style={styles.child}>
           {Array.isArray(subComments?.comment) ?
-            subComments?.comment.map((comment, index) => (
-              <ReplyComponent
-                key={comment.id}
-                comment={comment}
-                count={subComments.count}
-              // @ts-ignore
-              />
-            )) :
+            <FlatList
+              data={subComments.comment??[]}
+              renderItem={renderItem}
+            /> :
             <ReplyComponent comment={subComments.comment as GetRecursiveComment[number]} />
           }
         </View> :
@@ -146,7 +155,7 @@ const styles = StyleSheet.create({
     width: px(50),
     height: px(50),
     position: 'absolute',
-    backgroundColor:'orange'
+    backgroundColor: 'orange'
   },
   divider: {
     bottom: px(17.5),
@@ -168,7 +177,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   row3: {
-    zIndex:2,
+    zIndex: 2,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: px(60),
