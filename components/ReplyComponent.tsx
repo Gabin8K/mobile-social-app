@@ -11,7 +11,6 @@ type Props = {
   onLike?: () => void,
   comment?: GetComment[number],
   count?: number,
-  last?: boolean,
 }
 
 type SubComment = {
@@ -20,7 +19,7 @@ type SubComment = {
 }
 
 const ReplyComponent = memo(function ReplyComponent(props: Props) {
-  const { comment, count = 0, last, onLike } = props
+  const { comment, count = 0, onLike } = props
   const { theme: { colors } } = useTheme()
 
   const reply = useReply()
@@ -49,6 +48,8 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
 
   return (
     <View>
+      <View style={[styles.mask, { backgroundColor: colors.background }]} />
+      <View style={[styles.divider, { borderColor: colors.elevation.level3 }]} />
       <View style={styles.row}>
         <View style={styles.leftContainer}>
           {comment?.parent_id ?
@@ -59,7 +60,6 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
             size={px(50)}
             label={avatar_name}
           />
-          <View style={[styles.divider, { backgroundColor: colors.elevation.level3 }]} />
         </View>
         <View style={{ flex: 1 }}>
           <Card elevation={1}>
@@ -88,7 +88,6 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
         </View>
       </View>
       <View style={styles.row3}>
-        <View style={[styles.shape1, { borderColor: colors.elevation.level3 }]} />
         <Avatar.Text
           size={px(35)}
           label={`Tg`}
@@ -96,30 +95,16 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
         <Text style={{ fontSize: px(22) }}>
           {' '}Lorem ipsum dolor sit...
         </Text>
-        {!last ?
-          <View style={[styles.shape2, { borderColor: colors.elevation.level3 }]} /> :
-          null
-        }
       </View>
       {subComments ?
         <View style={styles.child}>
-          <View
-            style={[
-              styles.shape2,
-              {
-                borderColor: colors.elevation.level3,
-                height: '110%'
-              }
-            ]}
-          />
           {Array.isArray(subComments?.comment) ?
             subComments?.comment.map((comment, index) => (
               <ReplyComponent
                 key={comment.id}
                 comment={comment}
                 count={subComments.count}
-                // @ts-ignore
-                last={index === (subComments?.comment?.length) - 1}
+              // @ts-ignore
               />
             )) :
             <ReplyComponent comment={subComments.comment as GetRecursiveComment[number]} />
@@ -129,7 +114,6 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
       }
       {(count > 1) ?
         <View style={styles.row3}>
-          <View style={[styles.shape1, { borderColor: colors.elevation.level3 }]} />
           <Button
             labelStyle={{ marginLeft: 0 }}
             onPress={() => { }}
@@ -147,6 +131,7 @@ export default ReplyComponent
 
 const styles = StyleSheet.create({
   row: {
+    zIndex: 2,
     flexDirection: 'row',
     columnGap: px(10),
     paddingTop: px(20),
@@ -155,10 +140,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     rowGap: px(5),
   },
+  mask: {
+    top: px(-17.5),
+    zIndex: 1,
+    width: px(50),
+    height: px(50),
+    position: 'absolute',
+    backgroundColor:'orange'
+  },
   divider: {
-    flex: 1,
-    width: px(3),
-    borderRadius: px(3),
+    bottom: px(17.5),
+    left: px(23),
+    width: px(25),
+    height: '100%',
+    position: 'absolute',
+    borderBottomLeftRadius: px(10),
+    borderLeftWidth: px(2),
+    borderBottomWidth: px(2),
   },
   footer: {
     flexDirection: 'row',
@@ -170,17 +168,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   row3: {
+    zIndex:2,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: px(24),
-  },
-  shape1: {
-    width: px(20),
-    height: '50%',
-    alignSelf: 'flex-start',
-    borderLeftWidth: px(2),
-    borderBottomWidth: px(2),
-    borderBottomLeftRadius: px(10),
+    paddingLeft: px(60),
   },
   shape3: {
     top: 0,
@@ -191,15 +182,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: px(2),
     borderBottomWidth: px(2),
     borderBottomLeftRadius: px(10),
-  },
-  shape2: {
-    top: 0,
-    left: px(24),
-    width: px(20),
-    height: '150%',
-    position: 'absolute',
-    alignSelf: 'flex-end',
-    borderLeftWidth: px(2),
   },
   child: {
     paddingLeft: px(50),

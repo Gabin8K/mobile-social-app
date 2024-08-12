@@ -28,10 +28,9 @@ export default function CommentModal() {
       <ReplyComponent
         comment={item}
         onLike={onLike}
-        last={index === comments.length - 1}
       />
     )
-  }, [comments])
+  }, [])
 
   useEffect(() => {
     getCommentById(post_id as string).then(({ data }) => {
