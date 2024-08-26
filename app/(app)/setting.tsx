@@ -1,5 +1,5 @@
 import useTheme from '@/hooks/useTheme';
-import { px } from '@/utlis/size';
+import { px } from '@/utils/size';
 import { router } from 'expo-router';
 import { Fragment, useState } from 'react';
 import { StyleSheet, View } from 'react-native';

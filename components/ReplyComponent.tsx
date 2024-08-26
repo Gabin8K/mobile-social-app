@@ -1,62 +1,71 @@
 import React, { memo, useEffect, useMemo, useState } from 'react'
 import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
-import { px } from '@/utlis/size'
+import { px } from '@/utils/size'
 import useTheme from '@/hooks/useTheme'
-import { GetComment, GetRecursiveComment, getRecursiveCommentById } from '@/services/supabase'
+import { getRecursiveCommentById, Page, SubComment } from '@/services/supabase'
 import { useReply } from './ReplyContext'
-import { timeSince } from '@/utlis/date'
+import { timeSince } from '@/utils/date'
 
 type Props = {
   onLike?: () => void,
-  comment?: GetComment[number],
-  count?: number,
+  comment?: SubComment[number],
 }
 
-type SubComment = {
-  comment?: GetRecursiveComment | GetRecursiveComment[number],
-  count?: number,
-}
 
 const ReplyComponent = memo(function ReplyComponent(props: Props) {
-  const { comment, count = 0, onLike } = props
+  const { comment, onLike } = props
   const { theme: { colors } } = useTheme()
 
   const reply = useReply()
   const [subComments, setSubComments] = useState<SubComment | null>(null)
+  const [page, setPage] = useState<Page | null>({ from: 0, to: 1 })
 
-  const profile = comment?.profiles as any
-  const avatar_name = profile?.display_name?.slice(0, 2)
+  const avatar_name = comment?.display_name?.slice(0, 2) ?? '';
+  const diffCount = (comment?.childCount ?? 0) - (page?.to ?? 0);
+
 
   const onReply = () => {
-    reply?.setProfile(profile)
+    if (!comment) return
+    reply?.setProfile({
+      id: comment?.user_id,
+      display_name: comment?.display_name,
+      email: comment?.email
+    })
     reply?.setParentId(comment?.id)
   }
 
 
-  const renderItem = useMemo(() => function ListItem({ item, index }: ListRenderItemInfo<SubComment['comment']>) {
-    const itemComment = item as GetRecursiveComment[number]
+  const onFetchMore = () => {
+    if (!page) return
+    setPage({
+      from: page.to,
+      to: page.to + 2
+    })
+  }
+
+
+  const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<SubComment[number]>) {
     return (
       <ReplyComponent
-        key={itemComment.id}
-        comment={itemComment}
-        count={subComments?.count}
+        comment={item}
       />
     )
-  }, [subComments])
+  }, [])
 
 
   useEffect(() => {
-    if (comment) {
-      getRecursiveCommentById(comment.id).then(({ data, count }) => {
-        if (!data) return
-        setSubComments({
-          count: count ?? 0,
-          comment: data
-        })
+    if (comment && page) {
+      getRecursiveCommentById(comment.id, page).then(({ data }) => {
+        if (!data) return;
+        if (data.length === 0) {
+          setPage(null)
+          return
+        }
+        setSubComments(sub => [...(sub ?? []), ...data])
       })
     }
-  }, [])
+  }, [page])
 
 
   return (
@@ -85,7 +94,7 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
           <View style={styles.footer}>
             <View style={styles.row2}>
               <Text style={{ color: colors.tertiary }}>
-                {timeSince(new Date(comment?.created_at))}
+                {timeSince(new Date(comment?.created_at ?? 0))}
               </Text>
               <Button
                 textColor={colors.tertiary}
@@ -100,34 +109,23 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
           </View>
         </View>
       </View>
-      <View style={styles.row3}>
-        <Avatar.Text
-          size={px(35)}
-          label={`Tg`}
-        />
-        <Text style={{ fontSize: px(22) }}>
-          {' '}Lorem ipsum dolor sit...
-        </Text>
-      </View>
       {subComments ?
         <View style={styles.child}>
-          {Array.isArray(subComments?.comment) ?
-            <FlatList
-              data={subComments.comment??[]}
-              renderItem={renderItem}
-            /> :
-            <ReplyComponent comment={subComments.comment as GetRecursiveComment[number]} />
-          }
+          <FlatList
+            data={subComments ?? []}
+            extraData={subComments.length}
+            renderItem={renderItem}
+          />
         </View> :
         null
       }
-      {(count > 1) ?
+      {(comment?.childCount ?? 0) > (page?.to ?? 0) ?
         <View style={styles.row3}>
           <Button
             labelStyle={{ marginLeft: 0 }}
-            onPress={() => { }}
+            onPress={onFetchMore}
           >
-            See 12 more comments
+            See {diffCount} more comments
           </Button>
         </View> :
         null

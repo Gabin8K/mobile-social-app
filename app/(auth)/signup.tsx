@@ -1,6 +1,6 @@
 import useToast from '@/hooks/useToast'
 import supabase from '@/services/supabase'
-import { px } from '@/utlis/size'
+import { px } from '@/utils/size'
 import { makeRedirectUri } from 'expo-auth-session'
 import { router, Stack } from 'expo-router'
 import React, { Fragment, useCallback, useState } from 'react'

@@ -2,7 +2,7 @@ import React from 'react';
 import { createMaterialBottomTabNavigator, MaterialBottomTabNavigationOptions } from 'react-native-paper/react-navigation';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { withLayoutContext } from "expo-router";
-import { px } from '@/utlis/size';
+import { px } from '@/utils/size';
 
 
 const { Navigator } = createMaterialBottomTabNavigator();

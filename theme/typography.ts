@@ -1,4 +1,4 @@
-import { px } from "@/utlis/size";
+import { px } from "@/utils/size";
 import { configureFonts } from "react-native-paper";
 
 

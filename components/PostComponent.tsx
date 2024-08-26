@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { StyleSheet, View, ViewProps } from 'react-native'
 import { Avatar, Button, Card, IconButton, Text, TextInput } from 'react-native-paper'
-import { px } from '@/utlis/size'
+import { px } from '@/utils/size'
 import { router } from 'expo-router'
 import { createComment, createRepy, ListOfPostQuery } from '@/services/supabase'
 import useToast from '@/hooks/useToast'

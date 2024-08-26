@@ -3,7 +3,7 @@ import useAuth from '@/hooks/useAuth';
 import useBackhandler from '@/hooks/useBackhandler';
 import useToast from '@/hooks/useToast';
 import supabase, { createPost, listOfPost, ListOfPostQuery } from '@/services/supabase';
-import { px } from '@/utlis/size';
+import { px } from '@/utils/size';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';

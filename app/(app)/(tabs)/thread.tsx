@@ -1,7 +1,7 @@
 
 import PostComponent from '@/components/PostComponent';
 import useTheme from '@/hooks/useTheme';
-import { px } from '@/utlis/size';
+import { px } from '@/utils/size';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
 import { Appbar, Text } from 'react-native-paper';

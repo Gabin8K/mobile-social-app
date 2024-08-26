@@ -1,21 +1,28 @@
 import { FlatList, ListRenderItemInfo, StyleSheet } from 'react-native';
-import { Appbar } from 'react-native-paper';
+import { Appbar, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { px } from '@/utlis/size';
+import { px } from '@/utils/size';
 import { router, useLocalSearchParams } from 'expo-router';
 import ReplyComponent from '@/components/ReplyComponent';
 import { useEffect, useMemo, useState } from 'react';
-import { GetComment, getCommentById } from '@/services/supabase';
-import ReplyProvider from '@/components/ReplyContext';
+import { getRecursiveCommentByPostId, Page, SubComment } from '@/services/supabase';
+import ReplyProvider, { ModalState } from '@/components/ReplyContext';
 import ReplyModal from '@/components/ReplyModal';
+
+
 
 export default function CommentModal() {
 
   const { top } = useSafeAreaInsets()
   const { post_id, display_name } = useLocalSearchParams()
-  const [comments, setComments] = useState<GetComment>([])
+  const [comments, setComments] = useState<SubComment>([])
+  const [page, setPage] = useState<Page>({ from: 0, to: 2 })
 
-  const onGoback = () => {
+  const onGoback = (state: ModalState) => {
+    if (state.isModalOpen) {
+      state.onCloseModal()
+      return
+    }
     router.back()
   }
 
@@ -23,7 +30,7 @@ export default function CommentModal() {
     console.log('Like')
   }
 
-  const renderItem = useMemo(() => function ListItem({ item, index }: ListRenderItemInfo<GetComment[number]>) {
+  const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<SubComment[number]>) {
     return (
       <ReplyComponent
         comment={item}
@@ -32,41 +39,70 @@ export default function CommentModal() {
     )
   }, [])
 
-  useEffect(() => {
-    getCommentById(post_id as string).then(({ data }) => {
-      if (!data) return
-      setComments(data)
+  const onFetchMore = () => {
+    if (!page) return
+    setPage({
+      from: page.to,
+      to: page.to + 2
     })
-  }, [])
+  }
+
+  useEffect(() => {
+    if (!page) return
+    getRecursiveCommentByPostId(post_id as string, page).then(({ data }) => {
+      if (!data) return
+      setComments(comments => [...comments, ...data])
+    })
+  }, [page])
 
 
   return (
-    <ReplyProvider>
-      <Appbar.Header
-        elevated
-        mode={'small'}
-        style={{ marginTop: -top }}
-      >
-        <Appbar.BackAction onPress={onGoback} />
-        <Appbar.Content
-          title={`Reply to ${display_name}`}
-          titleStyle={{ fontSize: px(35) }}
-        />
-      </Appbar.Header>
-      <FlatList
-        data={comments}
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-        renderItem={renderItem}
-      />
-      <ReplyModal />
-    </ReplyProvider>
+    <>
+      <ReplyProvider>
+        {(state) => <>
+          <Appbar.Header
+            elevated
+            mode={'small'}
+            style={{ marginTop: -top }}
+          >
+            <Appbar.BackAction onPress={() => onGoback(state)} />
+            <Appbar.Content
+              title={`Reply to ${display_name}`}
+              titleStyle={{ fontSize: px(35) }}
+            />
+          </Appbar.Header>
+          <FlatList
+            data={comments}
+            contentContainerStyle={styles.container}
+            showsVerticalScrollIndicator={false}
+            renderItem={renderItem}
+            ListFooterComponent={
+              (comments?.[0]?.count ?? 0) > page.to ? <IconButton
+                icon={'arrow-down'}
+                mode={'contained'}
+                size={px(30)}
+                style={styles.button}
+                onPress={onFetchMore}
+              /> :
+                null
+            }
+          />
+          <ReplyModal visible={state.isModalOpen} />
+        </>
+        }
+      </ReplyProvider>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     marginTop: px(20),
+    paddingBottom: px(50),
     paddingHorizontal: px(20),
   },
+  button: {
+    alignSelf: 'center',
+    marginTop: px(25),
+  }
 })

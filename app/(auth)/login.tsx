@@ -1,7 +1,7 @@
 import useTheme from '@/hooks/useTheme'
 import useToast from '@/hooks/useToast'
 import supabase from '@/services/supabase'
-import { px } from '@/utlis/size'
+import { px } from '@/utils/size'
 import { Link, router } from 'expo-router'
 import React, { useCallback, useState } from 'react'
 import { StyleSheet, View } from 'react-native'

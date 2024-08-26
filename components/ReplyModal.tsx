@@ -1,13 +1,14 @@
 import { memo, useCallback, useState } from "react";
 import { Dialog, IconButton, TextInput } from "react-native-paper";
 import { useReply } from "./ReplyContext";
-import { px } from "@/utlis/size";
+import { px } from "@/utils/size";
 import { createRepy } from "@/services/supabase";
 import useToast from "@/hooks/useToast";
 import useAuth from "@/hooks/useAuth";
 import { useLocalSearchParams } from "expo-router";
 
 type Props = {
+  visible: boolean,
 }
 
 const ReplyModal = memo(function ReplyModal(props: Props) {
@@ -15,8 +16,6 @@ const ReplyModal = memo(function ReplyModal(props: Props) {
   const toast = useToast()
   const { session } = useAuth()
   const { post_id } = useLocalSearchParams()
-
-  const visible = !!(reply?.profile || reply?.parent_id)
 
   const [loading, setLoading] = useState(false)
   const [text, setText] = useState('')
@@ -46,7 +45,7 @@ const ReplyModal = memo(function ReplyModal(props: Props) {
 
   return (
     <Dialog
-      visible={visible}
+      visible={props.visible}
       onDismiss={onRequestClose}
     >
       <Dialog.Title style={{ fontSize: px(28) }}>Reply to {reply.profile?.display_name} </Dialog.Title>
