@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo, useState } from 'react'
+import React, { memo, useCallback, useMemo, useState } from 'react'
 import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utils/size'
@@ -19,10 +19,11 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
 
   const reply = useReply()
   const [subComments, setSubComments] = useState<SubComment | null>(null)
-  const [page, setPage] = useState<Page | null>({ from: 0, to: 1 })
+  const [page, setPage] = useState<Page | null>({ from: 0, take: 1 })
+  const [cantFetch, setCantFetch] = useState(true)
 
   const avatar_name = comment?.display_name?.slice(0, 2) ?? '';
-  const diffCount = (comment?.childCount ?? 0) - (page?.to ?? 0);
+  const diffCount = (comment?.child.count ?? 0) - ((page?.from ?? 0) + 1);
 
 
   const onReply = () => {
@@ -38,11 +39,29 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
 
   const onFetchMore = () => {
     if (!page) return
-    setPage({
-      from: page.to,
-      to: page.to + 2
-    })
+    const p = { from: page.from + page.take, take: page.take }
+    loadData(p)
+    setPage(p)
   }
+
+  const onFetchMoreSubChild = () => {
+    loadData(page)
+    setCantFetch(false)
+  }
+
+
+  const loadData = useCallback((page: Page | null) => {
+    if (!page || !comment) return
+    getRecursiveCommentById(comment.id, page).then(({ data }) => {
+      if (!data) return;
+      if (data.length === 0) {
+        setPage(null)
+        return
+      }
+      setSubComments(sub => [...(sub ?? []), ...data])
+    })
+  }, [comment])
+
 
 
   const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<SubComment[number]>) {
@@ -52,20 +71,6 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
       />
     )
   }, [])
-
-
-  useEffect(() => {
-    if (comment && page) {
-      getRecursiveCommentById(comment.id, page).then(({ data }) => {
-        if (!data) return;
-        if (data.length === 0) {
-          setPage(null)
-          return
-        }
-        setSubComments(sub => [...(sub ?? []), ...data])
-      })
-    }
-  }, [page])
 
 
   return (
@@ -119,7 +124,18 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
         </View> :
         null
       }
-      {(comment?.childCount ?? 0) > (page?.to ?? 0) ?
+      {(comment?.child.hasChild && cantFetch) ?
+        <View style={styles.row3}>
+          <Button
+            labelStyle={{ marginLeft: 0 }}
+            onPress={onFetchMoreSubChild}
+          >
+            See More replies
+          </Button>
+        </View> :
+        null
+      }
+      {(comment?.child.count ?? 0) > ((page?.from ?? 0) + 1) ?
         <View style={styles.row3}>
           <Button
             labelStyle={{ marginLeft: 0 }}

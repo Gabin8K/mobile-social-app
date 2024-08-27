@@ -16,7 +16,7 @@ export default function CommentModal() {
   const { top } = useSafeAreaInsets()
   const { post_id, display_name } = useLocalSearchParams()
   const [comments, setComments] = useState<SubComment>([])
-  const [page, setPage] = useState<Page>({ from: 0, to: 2 })
+  const [page, setPage] = useState<Page>({ from: 0, take: 2 })
 
   const onGoback = (state: ModalState) => {
     if (state.isModalOpen) {
@@ -42,8 +42,8 @@ export default function CommentModal() {
   const onFetchMore = () => {
     if (!page) return
     setPage({
-      from: page.to,
-      to: page.to + 2
+      from: page.from + page.take,
+      take: page.take
     })
   }
 
@@ -53,7 +53,7 @@ export default function CommentModal() {
       if (!data) return
       setComments(comments => [...comments, ...data])
     })
-  }, [page])
+  }, [page, post_id])
 
 
   return (
@@ -77,7 +77,7 @@ export default function CommentModal() {
             showsVerticalScrollIndicator={false}
             renderItem={renderItem}
             ListFooterComponent={
-              (comments?.[0]?.count ?? 0) > page.to ? <IconButton
+              (comments?.[0]?.count ?? 0) > page.from ? <IconButton
                 icon={'arrow-down'}
                 mode={'contained'}
                 size={px(30)}

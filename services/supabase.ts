@@ -28,7 +28,7 @@ AppState.addEventListener('change', (state) => {
 
 export type Page = {
   from: number,
-  to: number,
+  take: number,
 }
 
 
@@ -109,7 +109,10 @@ export type GetRecursiveComment = {
     created_at: Date,
     likes: string,
     count: number,
-    childCount: number,
+    child: {
+      count: number,
+      hasChild?: boolean
+    },
     display_name: string,
     email: string
   }[],
@@ -121,13 +124,18 @@ export const getRecursiveCommentById = async (parent_id: string, page: Page): Pr
   const { data, error } = await supabase.rpc('recursive_comment', {
     param_parent_id: parent_id,
     param_start: page.from,
-    param_take: page.to,
+    param_take: page.take,
   })
   const mappingWithCount = data?.map(async (datum: any) => ({
     ...datum,
-    childCount: await (async () => {
-      return (await supabase.from('comment').select('*', { count: 'exact', head: true }).eq('parent_id', datum.id)).count
-    })()
+    child: await (async () => {
+      const count = (await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id)).count
+      const hasChild = !!(await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id).limit(1)).count
+      return {
+        count,
+        hasChild
+      }
+    })(),
   }))
 
   return {
@@ -142,12 +150,17 @@ export const getRecursiveCommentByPostId = async (post_id: string, page: Page): 
   const { data, error } = await supabase.rpc('comment_by_post', {
     param_post_id: post_id,
     param_start: page.from,
-    param_take: page.to,
+    param_take: page.take,
   })
   const mappingWithCount = data?.map(async (datum: any) => ({
     ...datum,
-    childCount: await (async () => {
-      return (await supabase.from('comment').select('*', { count: 'exact', head: true }).eq('parent_id', datum.id)).count
+    child: await (async () => {
+      const count = (await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id)).count
+      const hasChild = !!(await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id).limit(1)).count
+      return {
+        count,
+        hasChild
+      }
     })()
   }))
 
