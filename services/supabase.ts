@@ -47,7 +47,7 @@ export const createComment = async (comment: Partial<Tables<'comment'>>) => {
   const { data, error } = await supabase.from('comment').insert(comment)
     .select();
   return {
-    data,
+    data: data,
     error,
   };
 }

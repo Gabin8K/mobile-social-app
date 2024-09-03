@@ -22,7 +22,7 @@ export default function CommentModal() {
 
   const onGoback = (state: ModalState) => {
     if (state.isModalOpen) {
-      state.onCloseModal()
+      state.closeModal()
       return
     }
     router.back()

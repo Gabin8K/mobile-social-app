@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utils/size'
@@ -6,6 +6,7 @@ import useTheme from '@/hooks/useTheme'
 import { getRecursiveCommentById, Page, SubComment } from '@/services/supabase'
 import { useReply } from './ReplyContext'
 import { timeSince } from '@/utils/date'
+import useAuth from '@/hooks/useAuth'
 
 type Props = {
   onLike?: () => void,
@@ -18,6 +19,7 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
   const { theme: { colors } } = useTheme()
 
   const reply = useReply()
+  const { session } = useAuth()
   const [subComments, setSubComments] = useState<SubComment | null>(null)
   const [page, setPage] = useState<Page | null>({ from: 0, take: 1 })
   const [cantFetch, setCantFetch] = useState(true)
@@ -37,9 +39,7 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
         email: comment?.email
       }
     })
-    // reply?.setSetCurrentSubComment(setSubComments)
   }
-
 
   const onFetchMore = () => {
     if (!page) return
@@ -65,6 +65,34 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
       setSubComments(sub => [...(sub ?? []), ...data])
     })
   }, [comment])
+
+
+  useEffect(() => {
+    // Cette fonction va ecouter le changement de l'etat du sous commentaire et mette a jour manuellement subComments
+    if (reply.state?.currentSubComment?.parent_id === comment?.id) {
+      if (!reply.state?.currentSubComment) return;
+
+      const subComment: SubComment[number] = {
+        id: reply.state.currentSubComment.id,
+        user_id: reply.state.currentSubComment.user_id,
+        parent_id: reply.state.currentSubComment.parent_id,
+        content: reply.state.currentSubComment.content ?? '',
+        created_at: new Date(reply.state.currentSubComment.created_at ?? 0),
+        likes: String(reply.state.currentSubComment.likes ?? ''),
+        display_name: session?.user?.user_metadata?.displayName ?? '',
+        email: session?.user?.user_metadata?.email ?? '',
+        count: 0,
+        child: {
+          count: 0,
+          hasChild: false
+        }
+      }
+      setSubComments(sub => sub ?
+        [...sub, { ...subComment, count: sub?.[0]?.count ?? 1 }] :
+        [subComment]
+      )
+    }
+  }, [reply.state?.currentSubComment])
 
 
 

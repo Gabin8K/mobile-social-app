@@ -21,7 +21,7 @@ const ReplyModal = memo(function ReplyModal(props: Props) {
   const [text, setText] = useState('')
 
   const onRequestClose = () => {
-    reply?.setState(undefined)
+    reply?.closeModal()
   }
 
   const onSubmit = useCallback(() => {
@@ -34,9 +34,13 @@ const ReplyModal = memo(function ReplyModal(props: Props) {
     })
       .then(({ data, error }) => {
         if (error) throw error
-        console.log(data)
+        reply.setState({
+          profile: undefined,
+          parent_id: undefined,
+          // Cette donnée est utilisée pour mettre a jour le commentaire récemment ajouté dans <ReplyComponent />
+          currentSubComment: data?.[0] as any
+        })
         setText('')
-        onRequestClose()
       })
       .catch(err => toast.message(String(err.message || err)))
       .finally(() => setLoading(false))
