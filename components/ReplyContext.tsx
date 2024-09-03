@@ -1,24 +1,32 @@
-import { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { Tables } from "@/services/type";
+import { SubComment } from "@/services/supabase";
 
-type ReplyContextType = {
+type State = {
   parent_id?: string,
   profile?: Tables<'profiles'>,
-  setParentId: (id?: string) => void,
-  setProfile: (profile?: ReplyContextType['profile']) => void
+}
+
+type ReplyContextType = {
+  state?: State,
+  setState: (state?: State) => void,
+  setCurrentSubComment: React.Dispatch<React.SetStateAction<SubComment[number]>>,
+  setSetCurrentSubComment: (setSubComment: any) => void
 }
 
 export type ModalState = {
   isModalOpen: boolean;
   onCloseModal: () => void;
 }
+
 type Props = {
   children: ((props: ModalState) => React.ReactNode) | React.ReactNode,
 }
 
 export const ReplyContext = createContext<ReplyContextType>({
-  setParentId: () => { },
-  setProfile: () => { },
+  setState: () => { },
+  setCurrentSubComment: () => { },
+  setSetCurrentSubComment: () => () => { }
 });
 
 export const useReply = () => useContext(ReplyContext);
@@ -26,23 +34,22 @@ export const useReply = () => useContext(ReplyContext);
 
 
 export default function ReplyProvider(props: Props) {
-  const [profile, setProfile] = useState<Tables<'profiles'>>()
-  const [parent_id, setParentId] = useState<any>()
+  const [state, setState] = useState<State>()
+  const [setCurrentSubComment, setSetCurrentSubComment] = useState<ReplyContextType['setCurrentSubComment']>(() => { })
 
-  const isModalOpen = !!(profile && parent_id);
+  const isModalOpen = !!(state?.profile && state?.parent_id);
 
   const onCloseModal = () => {
-    setProfile(undefined)
-    setParentId(undefined)
+    setState(undefined)
   }
-
+console.log(setCurrentSubComment)
   return (
     <ReplyContext.Provider
       value={{
-        parent_id,
-        profile,
-        setParentId,
-        setProfile
+        state,
+        setState,
+        setCurrentSubComment,
+        setSetCurrentSubComment,
       }}
     >
       {typeof props.children === 'function' ?

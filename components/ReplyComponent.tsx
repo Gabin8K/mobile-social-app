@@ -24,16 +24,20 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
 
   const avatar_name = comment?.display_name?.slice(0, 2) ?? '';
   const diffCount = (comment?.child.count ?? 0) - ((page?.from ?? 0) + 1);
+  const seeMore = (comment?.child.count ?? 0) > ((page?.from ?? 0) + 1);
 
 
   const onReply = () => {
     if (!comment) return
-    reply?.setProfile({
-      id: comment?.user_id,
-      display_name: comment?.display_name,
-      email: comment?.email
+    reply?.setState({
+      parent_id: comment?.id,
+      profile: {
+        id: comment?.user_id,
+        display_name: comment?.display_name,
+        email: comment?.email
+      }
     })
-    reply?.setParentId(comment?.id)
+    // reply?.setSetCurrentSubComment(setSubComments)
   }
 
 
@@ -124,6 +128,9 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
         </View> :
         null
       }
+      {/* 
+        Pour afficher le sous commentaire il faut se rassurer que le parent ait un enfant dans le champ {child:{hasChild:true}}
+      */}
       {(comment?.child.hasChild && cantFetch) ?
         <View style={styles.row3}>
           <Button
@@ -135,7 +142,10 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
         </View> :
         null
       }
-      {(comment?.child.count ?? 0) > ((page?.from ?? 0) + 1) ?
+      {/* 
+        Pour parginer les commentaires il faut d'abord être sûr que le sous commentaire soit chargé
+      */}
+      {seeMore && !cantFetch ?
         <View style={styles.row3}>
           <Button
             labelStyle={{ marginLeft: 0 }}

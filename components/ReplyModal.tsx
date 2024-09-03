@@ -21,8 +21,7 @@ const ReplyModal = memo(function ReplyModal(props: Props) {
   const [text, setText] = useState('')
 
   const onRequestClose = () => {
-    reply?.setProfile(undefined)
-    reply?.setParentId(undefined)
+    reply?.setState(undefined)
   }
 
   const onSubmit = useCallback(() => {
@@ -30,11 +29,12 @@ const ReplyModal = memo(function ReplyModal(props: Props) {
     createRepy({
       content: text,
       user_id: session?.user.id,
-      parent_id: reply.parent_id as string,
+      parent_id: reply.state?.parent_id as string,
       post_id: post_id as string,
     })
-      .then(({ error }) => {
+      .then(({ data, error }) => {
         if (error) throw error
+        console.log(data)
         setText('')
         onRequestClose()
       })
@@ -48,7 +48,7 @@ const ReplyModal = memo(function ReplyModal(props: Props) {
       visible={props.visible}
       onDismiss={onRequestClose}
     >
-      <Dialog.Title style={{ fontSize: px(28) }}>Reply to {reply.profile?.display_name} </Dialog.Title>
+      <Dialog.Title style={{ fontSize: px(28) }}>Reply to {reply.state?.profile?.display_name} </Dialog.Title>
       <Dialog.Content>
         <TextInput
           multiline
@@ -63,7 +63,7 @@ const ReplyModal = memo(function ReplyModal(props: Props) {
           onPress={onSubmit}
           loading={loading}
           disabled={loading || text.trim() === ''}
-          />
+        />
         <IconButton
           icon={'close'}
           onPress={onRequestClose}

@@ -97,7 +97,10 @@ const PostComponent = (props: Props) => {
           <Button>👍 {post.likes ?? 0}</Button>
           <View style={styles.row2}>
             {post.comment ?
-              <Button onPress={onGoToComment}>
+              <Button
+                onPress={onGoToComment}
+                disabled={commentSize === 0}
+              >
                 {commentSize} Comments
               </Button> :
               null

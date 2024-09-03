@@ -29,6 +29,7 @@ AppState.addEventListener('change', (state) => {
 export type Page = {
   from: number,
   take: number,
+  count?: number,
 }
 
 

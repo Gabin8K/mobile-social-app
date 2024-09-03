@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { px } from '@/utils/size';
 import { router, useLocalSearchParams } from 'expo-router';
 import ReplyComponent from '@/components/ReplyComponent';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getRecursiveCommentByPostId, Page, SubComment } from '@/services/supabase';
 import ReplyProvider, { ModalState } from '@/components/ReplyContext';
 import ReplyModal from '@/components/ReplyModal';
@@ -17,6 +17,8 @@ export default function CommentModal() {
   const { post_id, display_name } = useLocalSearchParams()
   const [comments, setComments] = useState<SubComment>([])
   const [page, setPage] = useState<Page>({ from: 0, take: 2 })
+
+  const cantFetch = (page.count ?? 0) > (page.from + page.take);
 
   const onGoback = (state: ModalState) => {
     if (state.isModalOpen) {
@@ -40,21 +42,30 @@ export default function CommentModal() {
   }, [])
 
   const onFetchMore = () => {
-    if (!page) return
-    setPage({
+    const _page = {
       from: page.from + page.take,
       take: page.take
-    })
+    }
+    loadData(_page)
   }
 
-  useEffect(() => {
+  const loadData = useCallback((page: Page) => {
     if (!page) return
     getRecursiveCommentByPostId(post_id as string, page).then(({ data }) => {
       if (!data) return
       setComments(comments => [...comments, ...data])
+      setPage(p => ({
+        ...page,
+        count: p.count ? p.count : data[0].count
+      }))
     })
-  }, [page, post_id])
+  }, [post_id])
 
+
+  useEffect(() => {
+    loadData(page)
+  }, [])
+  
 
   return (
     <>
@@ -77,7 +88,7 @@ export default function CommentModal() {
             showsVerticalScrollIndicator={false}
             renderItem={renderItem}
             ListFooterComponent={
-              (comments?.[0]?.count ?? 0) > page.from ? <IconButton
+              cantFetch ? <IconButton
                 icon={'arrow-down'}
                 mode={'contained'}
                 size={px(30)}
