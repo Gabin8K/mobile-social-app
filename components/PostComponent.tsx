@@ -32,6 +32,7 @@ const PostComponent = (props: Props) => {
   const [loading, setLoading] = useState(false)
   const [text, setText] = useState('')
   const [commentSize, setCommentSize] = useState(post.comment?.length ?? 0)
+  const [like, setlike] = useState(Number(post.likes ?? 0))
 
   const onGoToComment = () => {
     router.navigate({
@@ -45,6 +46,10 @@ const PostComponent = (props: Props) => {
 
   const onShowReply = () => {
     onShow?.(post.id)
+  }
+
+  const onLike =()=>{
+    setlike(l => l + 1)
   }
 
   const onSubmit = useCallback(async () => {
@@ -76,6 +81,7 @@ const PostComponent = (props: Props) => {
     }
   }, [text])
 
+
   return (
     <View
       {...rest}
@@ -94,7 +100,7 @@ const PostComponent = (props: Props) => {
           </Text>
         </Card.Content>
         <View style={styles.footer}>
-          <Button>👍 {post.likes ?? 0}</Button>
+          <Button onPress={onLike}>👍 {like}</Button>
           <View style={styles.row2}>
             {post.comment ?
               <Button

@@ -28,15 +28,10 @@ export default function CommentModal() {
     router.back()
   }
 
-  const onLike = () => {
-    console.log('Like')
-  }
-
   const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<SubComment[number]>) {
     return (
       <ReplyComponent
         comment={item}
-        onLike={onLike}
       />
     )
   }, [])

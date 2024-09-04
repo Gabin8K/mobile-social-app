@@ -38,7 +38,6 @@ const Signup = (props: Props) => {
           emailRedirectTo,
         }
       })
-
       if (error) throw error
       router.back()
     } catch (err: any) {
@@ -65,10 +64,12 @@ const Signup = (props: Props) => {
           <TextInput
             label={'Dispaly name'}
             placeholder={'Dispaly name'}
+            autoCapitalize={'none'}
             onChangeText={(text) => setForm({ ...form, displayName: text })}
           />
           <TextInput
-            label={'Email'}
+            label={'email'}
+            autoCapitalize={'none'}
             inputMode={'email'}
             placeholder={'Email'}
             onChangeText={(text) => setForm({ ...form, email: text })}

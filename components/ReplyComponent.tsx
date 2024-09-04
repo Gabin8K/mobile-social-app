@@ -9,13 +9,12 @@ import { timeSince } from '@/utils/date'
 import useAuth from '@/hooks/useAuth'
 
 type Props = {
-  onLike?: () => void,
   comment?: SubComment[number],
 }
 
 
 const ReplyComponent = memo(function ReplyComponent(props: Props) {
-  const { comment, onLike } = props
+  const { comment } = props
   const { theme: { colors } } = useTheme()
 
   const reply = useReply()
@@ -23,6 +22,7 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
   const [subComments, setSubComments] = useState<SubComment | null>(null)
   const [page, setPage] = useState<Page | null>({ from: 0, take: 1 })
   const [cantFetch, setCantFetch] = useState(true)
+  const [like, setlike] = useState(Number(comment?.likes ?? 0))
 
   const avatar_name = comment?.display_name?.slice(0, 2) ?? '';
   const diffCount = (comment?.child.count ?? 0) - ((page?.from ?? 0) + 1);
@@ -53,6 +53,10 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
     setCantFetch(false)
   }
 
+  const onLike = () => {
+    setlike(l => l + 1)
+  }
+
 
   const loadData = useCallback((page: Page | null) => {
     if (!page || !comment) return
@@ -71,17 +75,11 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
     // Cette fonction va ecouter le changement de l'etat du sous commentaire et mette a jour manuellement subComments
     if (reply.state?.currentSubComment?.parent_id === comment?.id) {
       if (!reply.state?.currentSubComment) return;
-
       const subComment: SubComment[number] = {
-        id: reply.state.currentSubComment.id,
-        user_id: reply.state.currentSubComment.user_id,
-        parent_id: reply.state.currentSubComment.parent_id,
-        content: reply.state.currentSubComment.content ?? '',
-        created_at: new Date(reply.state.currentSubComment.created_at ?? 0),
-        likes: String(reply.state.currentSubComment.likes ?? ''),
+        ...(reply.state.currentSubComment as any),
         display_name: session?.user?.user_metadata?.displayName ?? '',
         email: session?.user?.user_metadata?.email ?? '',
-        count: 0,
+        count: 1,
         child: {
           count: 0,
           hasChild: false
@@ -131,13 +129,13 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
           <View style={styles.footer}>
             <View style={styles.row2}>
               <Text style={{ color: colors.tertiary }}>
-                {timeSince(new Date(comment?.created_at ?? 0))}
+                {timeSince(comment?.created_at as any)}
               </Text>
               <Button
                 textColor={colors.tertiary}
                 onPress={onLike}
               >
-                👍 {comment?.likes ?? 0}
+                👍 {like}
               </Button>
             </View>
             <Button onPress={onReply} >

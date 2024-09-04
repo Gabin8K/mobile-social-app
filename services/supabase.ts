@@ -57,7 +57,7 @@ export const createRepy = async (comment: Partial<Tables<'comment'>>) => {
   const { data, error } = await supabase.from('comment').insert(comment)
     .select();
   return {
-    data,
+    data :data?.[0] as Tables<'comment'>,
     error,
   };
 }

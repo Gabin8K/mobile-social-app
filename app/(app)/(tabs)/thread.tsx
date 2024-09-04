@@ -56,6 +56,10 @@ export default function ThreadScreen() {
         mode={'small'}
         style={{ marginTop: -top }}
       >
+         {showBackHandlerId ?
+          <Appbar.BackAction onPress={() => setShowBackHandlerId(undefined)} /> :
+          null
+        }
         <Appbar.Content
           title="My Thread"
           titleStyle={{ fontSize: px(35) }}
@@ -68,7 +72,7 @@ export default function ThreadScreen() {
           marginLeft: px(20),
         }}
       >
-        {data?.length??0} Replies on your post
+        {data?.length ?? 0} Replies on your post
       </Text>
       <FlatList
         data={data}

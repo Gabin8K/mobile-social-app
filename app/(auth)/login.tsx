@@ -50,6 +50,7 @@ const Login = (props: Props) => {
           label={'Email'}
           inputMode={'email'}
           placeholder={'Email'}
+          autoCapitalize={'none'}
           onChangeText={(text) => setForm({ ...form, email: text })}
         />
         <TextInput

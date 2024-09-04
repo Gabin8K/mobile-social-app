@@ -38,7 +38,7 @@ const ReplyModal = memo(function ReplyModal(props: Props) {
           profile: undefined,
           parent_id: undefined,
           // Cette donnée est utilisée pour mettre a jour le commentaire récemment ajouté dans <ReplyComponent />
-          currentSubComment: data?.[0] as any
+          currentSubComment: data
         })
         setText('')
       })
