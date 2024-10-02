@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -55,6 +54,49 @@ export type Database = {
           },
           {
             foreignKeyName: "comment_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      likes: {
+        Row: {
+          comment_id: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "post"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -125,7 +167,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      comment_by_post: {
+        Args: {
+          param_post_id: string
+          param_take: number
+          param_start: number
+        }
+        Returns: {
+          id: string
+          user_id: string
+          content: string
+          created_at: string
+          likes: number
+          count: number
+          display_name: string
+          email: string
+        }[]
+      }
+      recursive_comment: {
+        Args: {
+          param_parent_id: string
+          param_take: number
+          param_start: number
+        }
+        Returns: {
+          id: string
+          user_id: string
+          content: string
+          created_at: string
+          likes: number
+          count: number
+          display_name: string
+          email: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

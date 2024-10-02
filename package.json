@@ -9,7 +9,7 @@
     "ios": "expo start --ios",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "codegen": "npx supabase gen types typescript --project-id \"igizpdphfjkqkgzibwid\" --schema public ./services/type.ts"
+    "codegen": "npx supabase gen types typescript --project-id \"igizpdphfjkqkgzibwid\" --schema public > ./services/database.types.ts"
   },
   "jest": {
     "preset": "jest-expo"

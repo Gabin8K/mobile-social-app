@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import { Tables } from "@/services/type";
+import { Tables } from "@/services/database.types";
 
 type State = {
   parent_id?: string,

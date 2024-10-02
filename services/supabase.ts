@@ -2,7 +2,8 @@ import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, PostgrestError, QueryData } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
-import { Tables } from './type';
+import { Tables } from './database.types';
+import { LikeParam, Page } from '@/types';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ADMIN_KEY as string;
@@ -26,12 +27,6 @@ AppState.addEventListener('change', (state) => {
 })
 
 
-export type Page = {
-  from: number,
-  take: number,
-  count?: number,
-}
-
 
 export const createPost = async (post: Partial<Tables<'post'>>) => {
   const { data, error } = await supabase.from('post').insert(post);
@@ -47,7 +42,7 @@ export const createComment = async (comment: Partial<Tables<'comment'>>) => {
   const { data, error } = await supabase.from('comment').insert(comment)
     .select();
   return {
-    data: data,
+    data,
     error,
   };
 }
@@ -57,10 +52,57 @@ export const createRepy = async (comment: Partial<Tables<'comment'>>) => {
   const { data, error } = await supabase.from('comment').insert(comment)
     .select();
   return {
-    data :data?.[0] as Tables<'comment'>,
+    data: data?.[0] as Tables<'comment'>,
     error,
   };
 }
+
+
+export const updateLikes = async (param: LikeParam) => {
+  const { like, isComment, ...body } = param;
+  const key = isComment ? 'comment_id' : 'post_id';
+  if (param.like) {
+    const { data, error } = await supabase.from('likes').insert(body)
+    return {
+      data,
+      error,
+    }
+  }
+  const { data, error } = await supabase.from('likes')
+    .delete()
+    .eq('user_id', param.user_id)
+    .eq(key, param[key])
+
+  return {
+    data,
+    error,
+  }
+}
+
+
+const listOfPostByUserIdQuery = (user_id: string) => supabase.from('post').select(`
+  id,
+  likes,
+  content,
+  created_at,
+  profiles (
+    id,
+    email,
+    display_name
+  ),
+  comment(
+    id,
+    parent_id,
+    content,
+    profiles (
+      id,
+      email,
+      display_name
+    )
+  )
+`)
+  .eq('user_id', user_id)
+  .is('comment.parent_id', null);
 
 
 const listOfPostQuery = supabase.from('post').select(`
@@ -87,9 +129,18 @@ const listOfPostQuery = supabase.from('post').select(`
   .is('comment.parent_id', null);
 
 
-export type ListOfPostQuery = QueryData<typeof listOfPostQuery>;
 export const listOfPost = async () => {
   const { data, error } = await listOfPostQuery;
+  return {
+    data,
+    error,
+  };
+}
+
+
+export type ListOfPostQuery = QueryData<ReturnType<typeof listOfPostByUserIdQuery>>;
+export const listOfPostByUserId = async (user_id: string) => {
+  const { data, error } = await listOfPostByUserIdQuery(user_id);
   return {
     data,
     error,
@@ -131,7 +182,7 @@ export const getRecursiveCommentById = async (parent_id: string, page: Page): Pr
     ...datum,
     child: await (async () => {
       const count = (await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id)).count
-      const hasChild = !!(await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id).limit(1)).count
+      const hasChild = (count ?? 0) > 0
       return {
         count,
         hasChild
@@ -157,7 +208,7 @@ export const getRecursiveCommentByPostId = async (post_id: string, page: Page): 
     ...datum,
     child: await (async () => {
       const count = (await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id)).count
-      const hasChild = !!(await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id).limit(1)).count
+      const hasChild = (count ?? 0) > 0
       return {
         count,
         hasChild

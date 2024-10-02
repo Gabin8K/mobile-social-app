@@ -6,9 +6,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
 import { Appbar, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { listOfPost, ListOfPostQuery } from '@/services/supabase';
+import { listOfPostByUserId, ListOfPostQuery } from '@/services/supabase';
 import useToast from '@/hooks/useToast';
 import useBackhandler from '@/hooks/useBackhandler';
+import useAuth from '@/hooks/useAuth';
 
 
 
@@ -16,6 +17,7 @@ export default function ThreadScreen() {
   const { top } = useSafeAreaInsets()
   const { theme: { colors } } = useTheme()
   const toast = useToast()
+  const { session } = useAuth()
 
   const [showBackHandlerId, setShowBackHandlerId] = useState<string>()
   const [data, setData] = useState<ListOfPostQuery | null>(null)
@@ -43,7 +45,7 @@ export default function ThreadScreen() {
   })
 
   useEffect(() => {
-    listOfPost()
+    listOfPostByUserId(session?.user?.id as string)
       .then(({ data }) => setData(data))
       .catch(err => toast.message(String(err.message || err)))
   }, [])
@@ -56,7 +58,7 @@ export default function ThreadScreen() {
         mode={'small'}
         style={{ marginTop: -top }}
       >
-         {showBackHandlerId ?
+        {showBackHandlerId ?
           <Appbar.BackAction onPress={() => setShowBackHandlerId(undefined)} /> :
           null
         }

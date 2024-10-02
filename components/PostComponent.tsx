@@ -3,7 +3,7 @@ import { StyleSheet, View, ViewProps } from 'react-native'
 import { Avatar, Button, Card, IconButton, Text, TextInput } from 'react-native-paper'
 import { px } from '@/utils/size'
 import { router } from 'expo-router'
-import { createComment, createRepy, ListOfPostQuery } from '@/services/supabase'
+import { createComment, createRepy, LikeParam, ListOfPostQuery, updateLikes } from '@/services/supabase'
 import useToast from '@/hooks/useToast'
 import useAuth from '@/hooks/useAuth'
 
@@ -48,8 +48,15 @@ const PostComponent = (props: Props) => {
     onShow?.(post.id)
   }
 
-  const onLike =()=>{
-    setlike(l => l + 1)
+  const onLike = async () => {
+    const param: LikeParam = {
+      user_id: session?.user.id as string,
+      post_id: post.id,
+      comment_id: null,
+      like: true,
+      isComment: false,
+    }
+    // setlike(l => l + 1)
   }
 
   const onSubmit = useCallback(async () => {
