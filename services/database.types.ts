@@ -14,7 +14,6 @@ export type Database = {
           content: string | null
           created_at: string | null
           id: string
-          likes: number | null
           parent_id: string | null
           post_id: string
           user_id: string
@@ -23,7 +22,6 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
-          likes?: number | null
           parent_id?: string | null
           post_id: string
           user_id: string
@@ -32,7 +30,6 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
-          likes?: number | null
           parent_id?: string | null
           post_id?: string
           user_id?: string
@@ -63,21 +60,21 @@ export type Database = {
       }
       likes: {
         Row: {
-          comment_id: string
+          comment_id: string | null
           id: string
-          post_id: string
+          post_id: string | null
           user_id: string
         }
         Insert: {
-          comment_id: string
+          comment_id?: string | null
           id?: string
-          post_id: string
+          post_id?: string | null
           user_id: string
         }
         Update: {
-          comment_id?: string
+          comment_id?: string | null
           id?: string
-          post_id?: string
+          post_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -109,21 +106,18 @@ export type Database = {
           content: string | null
           created_at: string | null
           id: string
-          likes: number | null
           user_id: string
         }
         Insert: {
           content?: string | null
           created_at?: string | null
           id?: string
-          likes?: number | null
           user_id: string
         }
         Update: {
           content?: string | null
           created_at?: string | null
           id?: string
-          likes?: number | null
           user_id?: string
         }
         Relationships: [
@@ -169,6 +163,7 @@ export type Database = {
     Functions: {
       comment_by_post: {
         Args: {
+          param_user_id: string
           param_post_id: string
           param_take: number
           param_start: number
@@ -178,7 +173,8 @@ export type Database = {
           user_id: string
           content: string
           created_at: string
-          likes: number
+          likes_count: number
+          is_like: number
           count: number
           display_name: string
           email: string

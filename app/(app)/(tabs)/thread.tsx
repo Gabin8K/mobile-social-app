@@ -1,4 +1,5 @@
 
+import React from 'react';
 import PostComponent from '@/components/PostComponent';
 import useTheme from '@/hooks/useTheme';
 import { px } from '@/utils/size';

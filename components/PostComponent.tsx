@@ -3,9 +3,11 @@ import { StyleSheet, View, ViewProps } from 'react-native'
 import { Avatar, Button, Card, IconButton, Text, TextInput } from 'react-native-paper'
 import { px } from '@/utils/size'
 import { router } from 'expo-router'
-import { createComment, createRepy, LikeParam, ListOfPostQuery, updateLikes } from '@/services/supabase'
+import { createComment, createRepy, ListOfPostQuery, updateLikes } from '@/services/supabase'
 import useToast from '@/hooks/useToast'
 import useAuth from '@/hooks/useAuth'
+import { LikeParam, LikeState } from '@/types'
+import { AntDesign } from '@expo/vector-icons'
 
 type Props = ViewProps & {
   show?: boolean,
@@ -32,7 +34,11 @@ const PostComponent = (props: Props) => {
   const [loading, setLoading] = useState(false)
   const [text, setText] = useState('')
   const [commentSize, setCommentSize] = useState(post.comment?.length ?? 0)
-  const [like, setlike] = useState(Number(post.likes ?? 0))
+  const [like, setLike] = useState<LikeState>({
+    count: post.like_count,
+    isLiked: post.is_liked,
+    loading: false
+  })
 
   const onGoToComment = () => {
     router.navigate({
@@ -49,14 +55,27 @@ const PostComponent = (props: Props) => {
   }
 
   const onLike = async () => {
-    const param: LikeParam = {
-      user_id: session?.user.id as string,
-      post_id: post.id,
-      comment_id: null,
-      like: true,
-      isComment: false,
+    setLike(like => ({ ...like, loading: true }))
+    try {
+      const param: LikeParam = {
+        user_id: session?.user.id as string,
+        post_id: post.id,
+        comment_id: null,
+        like: !like.isLiked,
+        isComment: false,
+      }
+      const response = await updateLikes(param)
+      if (response.error) throw response.error;
+      setLike(like => ({
+        ...like,
+        count: like.count + (like.isLiked ? -1 : 1),
+        isLiked: !like.isLiked,
+        loading: false
+      }))
+    } catch (err: any) {
+      toast.message(String(err.message || err))
+      setLike(like => ({ ...like, loading: false }))
     }
-    // setlike(l => l + 1)
   }
 
   const onSubmit = useCallback(async () => {
@@ -107,7 +126,13 @@ const PostComponent = (props: Props) => {
           </Text>
         </Card.Content>
         <View style={styles.footer}>
-          <Button onPress={onLike}>👍 {like}</Button>
+          <Button
+            loading={like.loading}
+            onPress={onLike}
+            icon={({color, size})=> <AntDesign size={size} color={color} name={like.isLiked ? 'like1' : 'like2'} />}
+          >
+            {like.count}
+          </Button>
           <View style={styles.row2}>
             {post.comment ?
               <Button

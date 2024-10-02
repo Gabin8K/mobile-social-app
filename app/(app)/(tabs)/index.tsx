@@ -72,7 +72,7 @@ export default function HomeScreen() {
 
 
   useEffect(() => {
-    listOfPost()
+    listOfPost(session?.user?.id as string)
       .then(({ data }) => setData(data))
       .catch(err => toast.message(String(err.message || err)))
   }, [])

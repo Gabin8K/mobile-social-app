@@ -6,9 +6,10 @@ import { px } from '@/utils/size';
 import { router, useLocalSearchParams } from 'expo-router';
 import ReplyComponent from '@/components/ReplyComponent';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getRecursiveCommentByPostId, Page, SubComment } from '@/services/supabase';
+import { getRecursiveCommentByPostId, SubComment } from '@/services/supabase';
 import ReplyProvider, { ModalState } from '@/components/ReplyContext';
 import ReplyModal from '@/components/ReplyModal';
+import { Page } from '@/types';
 
 
 
@@ -61,7 +62,7 @@ export default function CommentModal() {
   useEffect(() => {
     loadData(page)
   }, [])
-  
+
 
   return (
     <>

@@ -3,10 +3,11 @@ import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utils/size'
 import useTheme from '@/hooks/useTheme'
-import { getRecursiveCommentById, Page, SubComment } from '@/services/supabase'
+import { getRecursiveCommentById, SubComment } from '@/services/supabase'
 import { useReply } from './ReplyContext'
 import { timeSince } from '@/utils/date'
 import useAuth from '@/hooks/useAuth'
+import { Page } from '@/types'
 
 type Props = {
   comment?: SubComment[number],

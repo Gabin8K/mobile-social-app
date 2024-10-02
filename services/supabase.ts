@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, PostgrestError, QueryData } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
 import { Tables } from './database.types';
-import { LikeParam, Page } from '@/types';
+import { LikeField, LikeParam, Page } from '@/types';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ADMIN_KEY as string;
@@ -62,27 +62,20 @@ export const updateLikes = async (param: LikeParam) => {
   const { like, isComment, ...body } = param;
   const key = isComment ? 'comment_id' : 'post_id';
   if (param.like) {
-    const { data, error } = await supabase.from('likes').insert(body)
-    return {
-      data,
-      error,
-    }
+    const { error } = await supabase.from('likes').upsert(body)
+    return { error }
   }
-  const { data, error } = await supabase.from('likes')
+  const { error } = await supabase.from('likes')
     .delete()
     .eq('user_id', param.user_id)
     .eq(key, param[key])
 
-  return {
-    data,
-    error,
-  }
+  return { error }
 }
 
 
 const listOfPostByUserIdQuery = (user_id: string) => supabase.from('post').select(`
   id,
-  likes,
   content,
   created_at,
   profiles (
@@ -107,7 +100,6 @@ const listOfPostByUserIdQuery = (user_id: string) => supabase.from('post').selec
 
 const listOfPostQuery = supabase.from('post').select(`
   id,
-  likes,
   content,
   created_at,
   profiles (
@@ -129,20 +121,43 @@ const listOfPostQuery = supabase.from('post').select(`
   .is('comment.parent_id', null);
 
 
-export const listOfPost = async () => {
+export const listOfPost = async (user_id: string) => {
   const { data, error } = await listOfPostQuery;
+  if (!data) return { data: [], error }
+  const mappingWithLike = data?.map(async (datum) => ({
+    ...datum,
+    like_count: (await supabase.from('likes').select('*', { count: 'exact' }).eq('post_id', datum.id)).count,
+    is_liked: !!(
+      await supabase.from('likes')
+        .select('*', { count: 'exact' })
+        .eq('post_id', datum.id)
+        .eq('user_id', user_id)
+    ).count
+  }))
   return {
-    data,
+    data: await Promise.all(mappingWithLike) as ListOfPostQuery,
     error,
   };
 }
 
 
-export type ListOfPostQuery = QueryData<ReturnType<typeof listOfPostByUserIdQuery>>;
+export type ListOfPostQuery = (QueryData<ReturnType<typeof listOfPostByUserIdQuery>>[number] & LikeField)[];
+
 export const listOfPostByUserId = async (user_id: string) => {
   const { data, error } = await listOfPostByUserIdQuery(user_id);
+  if (!data) return { data: [], error }
+  const mappingWithLike = data?.map(async (datum) => ({
+    ...datum,
+    like_count: (await supabase.from('likes').select('*', { count: 'exact' }).eq('post_id', datum.id)).count,
+    is_liked: !!(
+      await supabase.from('likes')
+        .select('*', { count: 'exact' })
+        .eq('post_id', datum.id)
+        .eq('user_id', user_id)
+    ).count
+  }))
   return {
-    data,
+    data: await Promise.all(mappingWithLike) as ListOfPostQuery,
     error,
   };
 }

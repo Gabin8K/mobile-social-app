@@ -12,3 +12,15 @@ export type LikeParam = {
   like: boolean,
   isComment: boolean,
 }
+
+
+export type LikeState = {
+  count: number,
+  isLiked: boolean,
+  loading: boolean,
+}
+
+export type LikeField = {
+  like_count: number,
+  is_liked: boolean,
+}
