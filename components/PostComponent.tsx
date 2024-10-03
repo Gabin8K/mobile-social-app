@@ -54,7 +54,7 @@ const PostComponent = (props: Props) => {
     onShow?.(post.id)
   }
 
-  const onLike = async () => {
+  const onLike = useCallback(async () => {
     setLike(like => ({ ...like, loading: true }))
     try {
       const param: LikeParam = {
@@ -76,7 +76,7 @@ const PostComponent = (props: Props) => {
       toast.message(String(err.message || err))
       setLike(like => ({ ...like, loading: false }))
     }
-  }
+  }, [like])
 
   const onSubmit = useCallback(async () => {
     setLoading(true)

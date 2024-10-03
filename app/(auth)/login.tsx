@@ -4,11 +4,10 @@ import supabase from '@/services/supabase'
 import { px } from '@/utils/size'
 import { Link, router } from 'expo-router'
 import React, { useCallback, useState } from 'react'
-import { StyleSheet, View } from 'react-native'
+import { StyleSheet, TextInput as RNTextinput, View } from 'react-native'
 import { Button, Text, TextInput } from 'react-native-paper'
 
 type Props = {}
-
 
 
 const Login = (props: Props) => {
@@ -19,11 +18,13 @@ const Login = (props: Props) => {
     password: '',
   })
 
+  const emailRef = React.useRef<RNTextinput>(null)
+
   const toast = useToast()
   const [loading, setLoading] = useState(false)
   const [show, setShow] = useState(false);
 
-  const disabled = !form.email || !form.password ;
+  const disabled = !form.email || !form.password;
 
   const onSubmit = useCallback(async () => {
     try {
@@ -42,11 +43,29 @@ const Login = (props: Props) => {
     }
   }, [form])
 
+
+
+  const onResetPassword = useCallback(async () => {
+    if (!form.email) {
+      emailRef.current?.focus()
+      toast.message('Please enter your email')
+      return;
+    }
+    router.navigate({
+      pathname:'/(auth)/reset',
+      params:{ email: form.email }
+    })
+  }, [form.email])
+
+
+
   return (
     <View style={styles.container}>
       <Text variant={'displayLarge'}>Login</Text>
       <View style={styles.form}>
         <TextInput
+          ref={emailRef}
+          secureTextEntry={!show}
           label={'Email'}
           inputMode={'email'}
           placeholder={'Email'}
@@ -54,7 +73,6 @@ const Login = (props: Props) => {
           onChangeText={(text) => setForm({ ...form, email: text })}
         />
         <TextInput
-          secureTextEntry={!show}
           label={'Password'}
           placeholder={'Password'}
           right={
@@ -85,6 +103,15 @@ const Login = (props: Props) => {
             </Text>
           </Link>
         </Text>
+        <View style={styles.row}>
+          <Text>Forgot password?</Text>
+          <Button
+            mode={'text'}
+            onPress={onResetPassword}
+          >
+            Reset password
+          </Button>
+        </View>
       </View>
     </View>
   )
@@ -102,6 +129,11 @@ const styles = StyleSheet.create({
     marginTop: px(20),
     rowGap: px(20),
   },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: -px(20)
+  }
 })
 
 

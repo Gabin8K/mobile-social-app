@@ -10,15 +10,18 @@ import { getRecursiveCommentByPostId, SubComment } from '@/services/supabase';
 import ReplyProvider, { ModalState } from '@/components/ReplyContext';
 import ReplyModal from '@/components/ReplyModal';
 import { Page } from '@/types';
+import useAuth from '@/hooks/useAuth';
 
 
 
 export default function CommentModal() {
 
   const { top } = useSafeAreaInsets()
+  const { session } = useAuth()
   const { post_id, display_name } = useLocalSearchParams()
   const [comments, setComments] = useState<SubComment>([])
   const [page, setPage] = useState<Page>({ from: 0, take: 2 })
+  const [loading, setLoading] = useState(false)
 
   const cantFetch = (page.count ?? 0) > (page.from + page.take);
 
@@ -48,14 +51,15 @@ export default function CommentModal() {
 
   const loadData = useCallback((page: Page) => {
     if (!page) return
-    getRecursiveCommentByPostId(post_id as string, page).then(({ data }) => {
+    setLoading(true)
+    getRecursiveCommentByPostId(session?.user.id as string, post_id as string, page).then(({ data }) => {
       if (!data) return
       setComments(comments => [...comments, ...data])
       setPage(p => ({
         ...page,
         count: p.count ? p.count : data[0].count
       }))
-    })
+    }).finally(() => setLoading(false))
   }, [post_id])
 
 
@@ -91,6 +95,7 @@ export default function CommentModal() {
                 size={px(30)}
                 style={styles.button}
                 onPress={onFetchMore}
+                loading={loading}
               /> :
                 null
             }

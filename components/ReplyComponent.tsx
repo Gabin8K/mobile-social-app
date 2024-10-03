@@ -3,11 +3,12 @@ import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utils/size'
 import useTheme from '@/hooks/useTheme'
-import { getRecursiveCommentById, SubComment } from '@/services/supabase'
+import { getRecursiveCommentById, SubComment, updateLikes } from '@/services/supabase'
 import { useReply } from './ReplyContext'
 import { timeSince } from '@/utils/date'
 import useAuth from '@/hooks/useAuth'
-import { Page } from '@/types'
+import { LikeParam, LikeState, Page } from '@/types'
+import { AntDesign } from '@expo/vector-icons'
 
 type Props = {
   comment?: SubComment[number],
@@ -23,7 +24,12 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
   const [subComments, setSubComments] = useState<SubComment | null>(null)
   const [page, setPage] = useState<Page | null>({ from: 0, take: 1 })
   const [cantFetch, setCantFetch] = useState(true)
-  const [like, setlike] = useState(Number(comment?.likes ?? 0))
+  const [loading, setLoading] = useState(false)
+  const [like, setLike] = useState<LikeState>({
+    count: comment?.like_count ?? 0,
+    isLiked: comment?.is_liked ?? false,
+    loading: false
+  })
 
   const avatar_name = comment?.display_name?.slice(0, 2) ?? '';
   const diffCount = (comment?.child.count ?? 0) - ((page?.from ?? 0) + 1);
@@ -54,14 +60,35 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
     setCantFetch(false)
   }
 
-  const onLike = () => {
-    setlike(l => l + 1)
-  }
+
+  const onLike = useCallback(async () => {
+    setLike(like => ({ ...like, loading: true }))
+    try {
+      const param: LikeParam = {
+        user_id: session?.user.id as string,
+        comment_id: comment?.id as string,
+        post_id: null,
+        like: !like.isLiked,
+        isComment: true,
+      }
+      const response = await updateLikes(param)
+      if (response.error) throw response.error;
+      setLike(like => ({
+        ...like,
+        count: like.count + (like.isLiked ? -1 : 1),
+        isLiked: !like.isLiked,
+        loading: false
+      }))
+    } catch (err) {
+      setLike(like => ({ ...like, loading: false }))
+    }
+  }, [like])
 
 
   const loadData = useCallback((page: Page | null) => {
     if (!page || !comment) return
-    getRecursiveCommentById(comment.id, page).then(({ data }) => {
+    setLoading(true)
+    getRecursiveCommentById(session?.user.id as string, comment.id, page).then(({ data }) => {
       if (!data) return;
       if (data.length === 0) {
         setPage(null)
@@ -69,6 +96,7 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
       }
       setSubComments(sub => [...(sub ?? []), ...data])
     })
+      .finally(() => setLoading(false))
   }, [comment])
 
 
@@ -133,10 +161,11 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
                 {timeSince(comment?.created_at as any)}
               </Text>
               <Button
-                textColor={colors.tertiary}
+                loading={like.loading}
                 onPress={onLike}
+                icon={({ color, size }) => <AntDesign size={size} color={color} name={like.isLiked ? 'like1' : 'like2'} />}
               >
-                👍 {like}
+                {like.count}
               </Button>
             </View>
             <Button onPress={onReply} >
@@ -161,6 +190,7 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
       {(comment?.child.hasChild && cantFetch) ?
         <View style={styles.row3}>
           <Button
+            disabled={loading}
             labelStyle={{ marginLeft: 0 }}
             onPress={onFetchMoreSubChild}
           >
@@ -175,6 +205,7 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
       {seeMore && !cantFetch ?
         <View style={styles.row3}>
           <Button
+            disabled={loading}
             labelStyle={{ marginLeft: 0 }}
             onPress={onFetchMore}
           >

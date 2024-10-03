@@ -166,7 +166,7 @@ export const listOfPostByUserId = async (user_id: string) => {
 
 
 
-export type SubComment = GetRecursiveComment['data']
+export type SubComment = GetRecursiveComment['data'];
 export type GetRecursiveComment = {
   data: {
     id: string,
@@ -174,6 +174,8 @@ export type GetRecursiveComment = {
     parent_id: string,
     content: string,
     created_at: Date,
+    like_count: number,
+    is_liked: boolean,
     likes: string,
     count: number,
     child: {
@@ -187,7 +189,7 @@ export type GetRecursiveComment = {
 };
 
 
-export const getRecursiveCommentById = async (parent_id: string, page: Page): Promise<GetRecursiveComment> => {
+export const getRecursiveCommentById = async (user_id: string, parent_id: string, page: Page): Promise<GetRecursiveComment> => {
   const { data, error } = await supabase.rpc('recursive_comment', {
     param_parent_id: parent_id,
     param_start: page.from,
@@ -195,6 +197,13 @@ export const getRecursiveCommentById = async (parent_id: string, page: Page): Pr
   })
   const mappingWithCount = data?.map(async (datum: any) => ({
     ...datum,
+    like_count: (await supabase.from('likes').select('*', { count: 'exact' }).eq('comment_id', datum.id)).count,
+    is_liked: !!(
+      await supabase.from('likes')
+        .select('*', { count: 'exact' })
+        .eq('comment_id', datum.id)
+        .eq('user_id', user_id)
+    ).count,
     child: await (async () => {
       const count = (await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id)).count
       const hasChild = (count ?? 0) > 0
@@ -213,7 +222,7 @@ export const getRecursiveCommentById = async (parent_id: string, page: Page): Pr
 
 
 
-export const getRecursiveCommentByPostId = async (post_id: string, page: Page): Promise<GetRecursiveComment> => {
+export const getRecursiveCommentByPostId = async (user_id: string, post_id: string, page: Page): Promise<GetRecursiveComment> => {
   const { data, error } = await supabase.rpc('comment_by_post', {
     param_post_id: post_id,
     param_start: page.from,
@@ -221,12 +230,19 @@ export const getRecursiveCommentByPostId = async (post_id: string, page: Page): 
   })
   const mappingWithCount = data?.map(async (datum: any) => ({
     ...datum,
+    like_count: (await supabase.from('likes').select('*', { count: 'exact' }).eq('comment_id', datum.id)).count,
+    is_liked: !!(
+      await supabase.from('likes')
+        .select('*', { count: 'exact' })
+        .eq('comment_id', datum.id)
+        .eq('user_id', user_id)
+    ).count,
     child: await (async () => {
       const count = (await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id)).count
       const hasChild = (count ?? 0) > 0
       return {
         count,
-        hasChild
+        hasChild,
       }
     })()
   }))

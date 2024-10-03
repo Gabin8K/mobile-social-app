@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "comments",
+    "name": "Comments",
     "slug": "comments",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "com.gabingaby.comments",
+    "scheme": "com.gabindjm.comments",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -13,15 +13,14 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "bundleIdentifier": "com.gabingaby.comments",
       "supportsTablet": true
     },
     "android": {
-      "package": "com.gabingaby.comments",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.gabindjm.comments"
     },
     "plugins": [
       "expo-router"

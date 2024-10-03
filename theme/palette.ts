@@ -31,7 +31,7 @@ const light = {
   elevation: {
     level0: 'transparent',
     level1: 'rgb(250, 242, 244)',
-    level2: 'rgb(247, 236, 238)',
+    level2: 'rgb(245, 222, 215)',
     level3: 'rgb(244, 231, 231)',
     level4: 'rgb(243, 229, 229)',
     level5: 'rgb(241, 225, 225)'
