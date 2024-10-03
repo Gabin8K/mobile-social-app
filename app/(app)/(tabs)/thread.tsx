@@ -4,13 +4,14 @@ import PostComponent from '@/components/PostComponent';
 import useTheme from '@/hooks/useTheme';
 import { px } from '@/utils/size';
 import { useEffect, useMemo, useState } from 'react';
-import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
+import { ListRenderItemInfo, StyleSheet, View } from 'react-native';
 import { Appbar, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listOfPostByUserId, ListOfPostQuery } from '@/services/supabase';
 import useToast from '@/hooks/useToast';
 import useBackhandler from '@/hooks/useBackhandler';
 import useAuth from '@/hooks/useAuth';
+import Animated, { LinearTransition, SlideInLeft } from 'react-native-reanimated';
 
 
 
@@ -24,10 +25,11 @@ export default function ThreadScreen() {
   const [data, setData] = useState<ListOfPostQuery | null>(null)
 
 
-  const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<ListOfPostQuery[number]>) {
+  const renderItem = useMemo(() => function ListItem({ item, index }: ListRenderItemInfo<ListOfPostQuery[number]>) {
     return (
       <View style={styles.item}>
         <PostComponent
+          index={index}
           post={item}
           show={showBackHandlerId === item.id}
           onShow={setShowBackHandlerId}
@@ -60,13 +62,22 @@ export default function ThreadScreen() {
         style={{ marginTop: -top }}
       >
         {showBackHandlerId ?
-          <Appbar.BackAction onPress={() => setShowBackHandlerId(undefined)} /> :
+          <Animated.View
+            entering={SlideInLeft}
+          >
+            <Appbar.BackAction onPress={() => setShowBackHandlerId(undefined)} />
+          </Animated.View> :
           null
         }
-        <Appbar.Content
-          title="My Thread"
-          titleStyle={{ fontSize: px(35) }}
-        />
+        <Animated.View
+          layout={LinearTransition}
+          style={[styles.title, { marginLeft: showBackHandlerId ? 0 : px(20) }]}
+        >
+          <Appbar.Content
+            title="My Thread"
+            titleStyle={{ fontSize: px(35) }}
+          />
+        </Animated.View>
       </Appbar.Header>
       <Text
         variant={'bodyLarge'}
@@ -77,11 +88,12 @@ export default function ThreadScreen() {
       >
         {data?.length ?? 0} Replies on your post
       </Text>
-      <FlatList
+      <Animated.FlatList
         data={data}
-        style={styles.content}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        itemLayoutAnimation={LinearTransition}
       />
     </>
   );
@@ -91,6 +103,11 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     marginTop: px(30),
+  },
+  title: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   item: {
     padding: px(20),

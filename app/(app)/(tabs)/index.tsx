@@ -7,8 +7,9 @@ import { px } from '@/utils/size';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
+import { ListRenderItemInfo, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Appbar, Avatar, IconButton, TextInput, Tooltip } from 'react-native-paper';
+import Animated, { LinearTransition, SlideInLeft, SlideInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
@@ -50,9 +51,10 @@ export default function HomeScreen() {
   }, [])
 
 
-  const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<ListOfPostQuery[number]>) {
+  const renderItem = useMemo(() => function ListItem({ item, index }: ListRenderItemInfo<ListOfPostQuery[number]>) {
     return (
       <PostComponent
+        index={index}
         post={item}
         show={showBackHandlerId === item.id}
         onShow={setShowBackHandlerId}
@@ -86,13 +88,22 @@ export default function HomeScreen() {
         style={{ marginTop: -top }}
       >
         {showBackHandlerId ?
-          <Appbar.BackAction onPress={() => setShowBackHandlerId(undefined)} /> :
+          <Animated.View
+            entering={SlideInLeft}
+          >
+            <Appbar.BackAction onPress={() => setShowBackHandlerId(undefined)} />
+          </Animated.View> :
           null
         }
-        <Appbar.Content
-          title="Comment's"
-          titleStyle={{ fontSize: px(35) }}
-        />
+        <Animated.View
+          layout={LinearTransition}
+          style={[styles.title, { marginLeft: showBackHandlerId ? 0 : px(20) }]}
+        >
+          <Appbar.Content
+            title="Comment's"
+            titleStyle={{ fontSize: px(35) }}
+          />
+        </Animated.View>
         <View style={styles.headerRow}>
           <Tooltip title={'Setting'}>
             <IconButton
@@ -110,7 +121,10 @@ export default function HomeScreen() {
           </Tooltip>
         </View>
       </Appbar.Header>
-      <View style={styles.row}>
+      <Animated.View
+        style={styles.row}
+        entering={SlideInUp.duration(500)}
+      >
         <Avatar.Text
           size={px(100)}
           label={`${displayName?.charAt?.(0) ?? ''}${displayName?.charAt?.(1) ?? ''}`}
@@ -129,12 +143,13 @@ export default function HomeScreen() {
                 null
           }
         />
-      </View>
-      <FlatList
+      </Animated.View>
+      <Animated.FlatList
         data={data}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
+        itemLayoutAnimation={LinearTransition}
       />
     </View>
   );
@@ -143,6 +158,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  title: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   row: {
     marginTop: px(40),

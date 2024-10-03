@@ -52,8 +52,8 @@ const Login = (props: Props) => {
       return;
     }
     router.navigate({
-      pathname:'/(auth)/reset',
-      params:{ email: form.email }
+      pathname: '/(auth)/reset',
+      params: { email: form.email }
     })
   }, [form.email])
 

@@ -8,8 +8,11 @@ import useToast from '@/hooks/useToast'
 import useAuth from '@/hooks/useAuth'
 import { LikeParam, LikeState } from '@/types'
 import { AntDesign } from '@expo/vector-icons'
+import Animated, { LinearTransition, SlideInLeft } from 'react-native-reanimated'
+import useTheme from '@/hooks/useTheme'
 
 type Props = ViewProps & {
+  index: number,
   show?: boolean,
   myPost?: boolean,
   post: ListOfPostQuery[number]
@@ -23,13 +26,14 @@ type Response = {
 
 
 const PostComponent = (props: Props) => {
-  const { post, show, myPost, onShow, ...rest } = props
+  const { index, post, show, myPost, onShow, style, ...rest } = props
 
   const profile = post.profiles as any
   const avatar_name = profile.display_name.slice(0, 2)
 
   const toast = useToast()
   const { session } = useAuth()
+  const { theme: { colors } } = useTheme()
 
   const [loading, setLoading] = useState(false)
   const [text, setText] = useState('')
@@ -108,9 +112,12 @@ const PostComponent = (props: Props) => {
   }, [text])
 
 
+
   return (
-    <View
+    <Animated.View
       {...rest}
+      style={[style, { backgroundColor: colors.background }]}
+      entering={SlideInLeft.delay(index * 90)}
     >
       <View style={styles.row}>
         <Avatar.Text
@@ -120,55 +127,59 @@ const PostComponent = (props: Props) => {
         <Text variant={'titleMedium'}>{profile.display_name}</Text>
       </View>
       <Card elevation={1}>
-        <Card.Content>
-          <Text>
-            {post.content}
-          </Text>
-        </Card.Content>
-        <View style={styles.footer}>
-          <Button
-            loading={like.loading}
-            onPress={onLike}
-            icon={({color, size})=> <AntDesign size={size} color={color} name={like.isLiked ? 'like1' : 'like2'} />}
-          >
-            {like.count}
-          </Button>
-          <View style={styles.row2}>
-            {post.comment ?
-              <Button
-                onPress={onGoToComment}
-                disabled={commentSize === 0}
-              >
-                {commentSize} Comments
-              </Button> :
-              null
-            }
-            <Button onPress={onShowReply} >
-              Repy
+        <Animated.View
+          layout={LinearTransition}
+        >
+          <Card.Content>
+            <Text style={{ marginTop: px(10) }}>
+              {post.content}
+            </Text>
+          </Card.Content>
+          <View style={styles.footer}>
+            <Button
+              loading={like.loading}
+              onPress={onLike}
+              icon={({ color, size }) => <AntDesign size={size} color={color} name={like.isLiked ? 'like1' : 'like2'} />}
+            >
+              {like.count}
             </Button>
+            <View style={styles.row2}>
+              {post.comment ?
+                <Button
+                  onPress={onGoToComment}
+                  disabled={commentSize === 0}
+                >
+                  {commentSize} Comments
+                </Button> :
+                null
+              }
+              <Button onPress={onShowReply} >
+                Repy
+              </Button>
+            </View>
           </View>
-        </View>
-        {show ?
-          <View style={styles.row3}>
-            <TextInput
-              multiline
-              label={'Type your comment'}
-              mode={'flat'}
-              style={styles.input}
-              onChangeText={setText}
-              disabled={loading}
-            />
-            <IconButton
-              icon={'send'}
-              loading={loading}
-              disabled={loading || text.trim() === ''}
-              onPress={onSubmit}
-            />
-          </View> :
-          null
-        }
+          {show ?
+            <View style={styles.row3}>
+              <TextInput
+                multiline
+                label={'Type your comment'}
+                mode={'flat'}
+                style={styles.input}
+                onChangeText={setText}
+                disabled={loading}
+              />
+              <IconButton
+                icon={'send'}
+                loading={loading}
+                disabled={loading || text.trim() === ''}
+                onPress={onSubmit}
+              />
+            </View> :
+            null
+          }
+        </Animated.View>
       </Card>
-    </View>
+    </Animated.View>
   )
 }
 
