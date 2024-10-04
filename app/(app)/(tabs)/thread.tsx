@@ -24,6 +24,12 @@ export default function ThreadScreen() {
   const [showBackHandlerId, setShowBackHandlerId] = useState<string>()
   const [data, setData] = useState<ListOfPostQuery | null>(null)
 
+  const replieCount = data?.reduce((acc, post) => acc + post?.comment.length, 0) ?? 0;
+  const repliesArray = [
+    `${data?.length ?? 0} Posts Found`,
+    `${replieCount} Replies`
+  ]
+
 
   const renderItem = useMemo(() => function ListItem({ item, index }: ListRenderItemInfo<ListOfPostQuery[number]>) {
     return (
@@ -79,15 +85,17 @@ export default function ThreadScreen() {
           />
         </Animated.View>
       </Appbar.Header>
-      <Text
-        variant={'bodyLarge'}
-        style={{
-          color: colors.primary,
-          marginLeft: px(20),
-        }}
-      >
-        {data?.length ?? 0} Replies on your post
-      </Text>
+      <View style={styles.row}>
+        {repliesArray.map((text, index) => (
+          <Text
+            key={index}
+            variant={'bodyLarge'}
+            style={{ color: colors.primary}}
+          >
+            {text}
+          </Text>
+        ))}
+      </View>
       <Animated.FlatList
         data={data}
         renderItem={renderItem}
@@ -101,13 +109,19 @@ export default function ThreadScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    flex: 1,
     marginTop: px(30),
+    paddingBottom: px(50),
   },
   title: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'center',
+  },
+  row:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: px(20),
   },
   item: {
     padding: px(20),

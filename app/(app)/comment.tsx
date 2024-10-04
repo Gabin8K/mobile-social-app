@@ -6,12 +6,12 @@ import { px } from '@/utils/size';
 import { router, useLocalSearchParams } from 'expo-router';
 import ReplyComponent from '@/components/ReplyComponent';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getRecursiveCommentByPostId, SubComment } from '@/services/supabase';
+import { getParentRecursiveCommentById, SubComment } from '@/services/supabase';
 import ReplyProvider, { ModalState } from '@/components/ReplyContext';
-import ReplyModal from '@/components/ReplyField';
+import ReplyField from '@/components/ReplyField';
 import { Page } from '@/types';
 import useAuth from '@/hooks/useAuth';
-import Animated, { LinearTransition } from 'react-native-reanimated';
+import Animated, { LinearTransition, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 
 
 
@@ -24,7 +24,7 @@ export default function CommentModal() {
   const [page, setPage] = useState<Page>({ from: 0, take: 2 })
   const [loading, setLoading] = useState(false)
 
-  const cantFetch = (page.count ?? 0) > (page.from + page.take);
+  const cantFetch = (page.count ?? 0) > (page.from);
 
   const onGoback = (state: ModalState) => {
     if (state.isModalOpen) {
@@ -44,29 +44,26 @@ export default function CommentModal() {
   }, [])
 
   const onFetchMore = () => {
-    const _page = {
-      from: page.from + page.take,
-      take: page.take
-    }
-    loadData(_page)
+    loadData()
   }
 
-  const loadData = useCallback((page: Page) => {
+  const loadData = useCallback(() => {
     if (!page) return
     setLoading(true)
-    getRecursiveCommentByPostId(session?.user.id as string, post_id as string, page).then(({ data }) => {
+    getParentRecursiveCommentById(session?.user.id as string, post_id as string, page).then(({ data }) => {
       if (!data) return
       setComments(comments => [...comments, ...data])
-      setPage(p => ({
+      setPage({
         ...page,
-        count: p.count ? p.count : data[0].count
-      }))
+        from: page.from + page.take,
+        count: data?.[0]?.count ?? page.count
+      })
     }).finally(() => setLoading(false))
-  }, [post_id])
+  }, [post_id, page])
 
 
   useEffect(() => {
-    loadData(page)
+    loadData()
   }, [])
 
 
@@ -91,21 +88,24 @@ export default function CommentModal() {
             showsVerticalScrollIndicator={false}
             renderItem={renderItem}
             itemLayoutAnimation={LinearTransition}
-            ListFooterComponent={
-              cantFetch ? (
-                <IconButton
-                  icon={'arrow-down'}
-                  mode={'contained'}
-                  size={px(30)}
-                  style={styles.button}
-                  onPress={onFetchMore}
-                  loading={loading}
-                />
-              ) :
-                null
-            }
           />
-          <ReplyModal visible={state.isModalOpen} />
+          {cantFetch ?
+            <Animated.View
+              entering={SlideInDown.duration(500)}
+              exiting={SlideOutDown.duration(500)}
+            >
+              <IconButton
+                icon={'arrow-down'}
+                mode={'contained'}
+                size={px(30)}
+                style={styles.button}
+                onPress={onFetchMore}
+                loading={loading}
+              />
+            </Animated.View> :
+            null
+          }
+          <ReplyField visible={state.isModalOpen} />
         </>
         }
       </ReplyProvider>
@@ -121,6 +121,5 @@ const styles = StyleSheet.create({
   },
   button: {
     alignSelf: 'center',
-    marginTop: px(25),
   }
 })
