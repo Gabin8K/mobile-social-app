@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
+import { ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utils/size'
 import useTheme from '@/hooks/useTheme'
@@ -9,14 +9,16 @@ import { timeSince } from '@/utils/date'
 import useAuth from '@/hooks/useAuth'
 import { LikeParam, LikeState, Page } from '@/types'
 import { AntDesign } from '@expo/vector-icons'
+import Animated, { LinearTransition, SlideInLeft } from 'react-native-reanimated'
 
 type Props = {
+  index?: number,
   comment?: SubComment[number],
 }
 
 
 const ReplyComponent = memo(function ReplyComponent(props: Props) {
-  const { comment } = props
+  const { index, comment } = props
   const { theme: { colors } } = useTheme()
 
   const reply = useReply()
@@ -133,7 +135,10 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
 
 
   return (
-    <View>
+    <Animated.View
+      layout={LinearTransition}
+      entering={SlideInLeft.delay(index ? index * 90 : 0)}
+    >
       <View style={[styles.mask, { backgroundColor: colors.background }]} />
       <View style={[styles.divider, { borderColor: colors.elevation.level3 }]} />
       <View style={styles.row}>
@@ -176,10 +181,13 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
       </View>
       {subComments ?
         <View style={styles.child}>
-          <FlatList
+          <Animated.FlatList
             data={subComments ?? []}
             extraData={subComments.length}
             renderItem={renderItem}
+            layout={LinearTransition}
+            itemLayoutAnimation={LinearTransition}
+            showsVerticalScrollIndicator={false}
           />
         </View> :
         null
@@ -214,7 +222,7 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
         </View> :
         null
       }
-    </View>
+    </Animated.View>
   )
 })
 

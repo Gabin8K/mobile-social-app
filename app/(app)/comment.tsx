@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, ListRenderItemInfo, StyleSheet } from 'react-native';
+import { ListRenderItemInfo, StyleSheet } from 'react-native';
 import { Appbar, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { px } from '@/utils/size';
@@ -8,9 +8,10 @@ import ReplyComponent from '@/components/ReplyComponent';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getRecursiveCommentByPostId, SubComment } from '@/services/supabase';
 import ReplyProvider, { ModalState } from '@/components/ReplyContext';
-import ReplyModal from '@/components/ReplyModal';
+import ReplyModal from '@/components/ReplyField';
 import { Page } from '@/types';
 import useAuth from '@/hooks/useAuth';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 
 
 
@@ -33,9 +34,10 @@ export default function CommentModal() {
     router.back()
   }
 
-  const renderItem = useMemo(() => function ListItem({ item }: ListRenderItemInfo<SubComment[number]>) {
+  const renderItem = useMemo(() => function ListItem({ item, index }: ListRenderItemInfo<SubComment[number]>) {
     return (
       <ReplyComponent
+        index={index}
         comment={item}
       />
     )
@@ -83,20 +85,23 @@ export default function CommentModal() {
               titleStyle={{ fontSize: px(35) }}
             />
           </Appbar.Header>
-          <FlatList
+          <Animated.FlatList
             data={comments}
             contentContainerStyle={styles.container}
             showsVerticalScrollIndicator={false}
             renderItem={renderItem}
+            itemLayoutAnimation={LinearTransition}
             ListFooterComponent={
-              cantFetch ? <IconButton
-                icon={'arrow-down'}
-                mode={'contained'}
-                size={px(30)}
-                style={styles.button}
-                onPress={onFetchMore}
-                loading={loading}
-              /> :
+              cantFetch ? (
+                <IconButton
+                  icon={'arrow-down'}
+                  mode={'contained'}
+                  size={px(30)}
+                  style={styles.button}
+                  onPress={onFetchMore}
+                  loading={loading}
+                />
+              ) :
                 null
             }
           />

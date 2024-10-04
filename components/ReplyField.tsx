@@ -1,21 +1,27 @@
 import { memo, useCallback, useState } from "react";
-import { Dialog, IconButton, TextInput } from "react-native-paper";
+import { IconButton, Text, TextInput } from "react-native-paper";
 import { useReply } from "./ReplyContext";
 import { px } from "@/utils/size";
 import { createRepy } from "@/services/supabase";
 import useToast from "@/hooks/useToast";
 import useAuth from "@/hooks/useAuth";
 import { useLocalSearchParams } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import Animated, { SlideInDown, SlideOutDown, useAnimatedKeyboard, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import useTheme from "@/hooks/useTheme";
 
 type Props = {
   visible: boolean,
 }
 
-const ReplyModal = memo(function ReplyModal(props: Props) {
+const ReplyField = memo(function ReplyField(props: Props) {
   const reply = useReply()
   const toast = useToast()
   const { session } = useAuth()
   const { post_id } = useLocalSearchParams()
+
+  const { theme: { colors } } = useTheme()
+  const keyboard = useAnimatedKeyboard()
 
   const [loading, setLoading] = useState(false)
   const [text, setText] = useState('')
@@ -47,35 +53,76 @@ const ReplyModal = memo(function ReplyModal(props: Props) {
   }, [text, post_id, reply])
 
 
+  const uas = useAnimatedStyle(() => {
+    const translateY = withTiming(-keyboard.height.value)
+    return {
+      transform: [{ translateY }]
+    }
+  }, [])
+
+
+  if (!props.visible) return null
+
   return (
-    <Dialog
-      visible={props.visible}
-      onDismiss={onRequestClose}
+    <Animated.View
+      entering={SlideInDown}
+      exiting={SlideOutDown.duration(500)}
+      style={[
+        uas,
+        styles.container,
+        { backgroundColor: colors.elevation.level2 }
+      ]}
     >
-      <Dialog.Title style={{ fontSize: px(28) }}>Reply to {reply.state?.profile?.display_name} </Dialog.Title>
-      <Dialog.Content>
+      <View style={styles.row}>
+        <Text>
+          Reply to{' '}
+          <Text style={{ fontFamily: 'WSb' }}>{reply.state?.profile?.display_name}</Text>
+        </Text>
+        <IconButton
+          icon={'close'}
+          size={px(40)}
+          onPress={onRequestClose}
+        />
+      </View>
+      <View style={styles.content}>
         <TextInput
+          autoFocus
           multiline
-          numberOfLines={3}
           onChangeText={setText}
           placeholder={'Typing...'}
+          style={styles.input}
         />
-      </Dialog.Content>
-      <Dialog.Actions>
         <IconButton
+          mode={'contained'}
           icon={'send'}
           onPress={onSubmit}
           loading={loading}
           disabled={loading || text.trim() === ''}
         />
-        <IconButton
-          icon={'close'}
-          onPress={onRequestClose}
-        />
-      </Dialog.Actions>
-    </Dialog>
+      </View>
+    </Animated.View>
   )
 })
 
 
-export default ReplyModal;
+const styles = StyleSheet.create({
+  container: {
+    paddingLeft: px(20),
+  },
+  content: {
+    flexDirection: 'row',
+  },
+  input: {
+    flex: 1,
+    height: px(50),
+    justifyContent: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  }
+})
+
+
+export default ReplyField;
