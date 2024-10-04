@@ -2,7 +2,6 @@ import useAuth from '@/hooks/useAuth'
 import useToast from '@/hooks/useToast'
 import supabase from '@/services/supabase'
 import { px } from '@/utils/size'
-import { makeRedirectUri } from 'expo-auth-session'
 import { Stack, useLocalSearchParams } from 'expo-router'
 import React, { Fragment, useCallback, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
@@ -10,12 +9,10 @@ import { Button, Text, TextInput } from 'react-native-paper'
 
 type Props = {}
 
-const redirectTo = makeRedirectUri()
 
 const Signup = (props: Props) => {
 
   const auth = useAuth();
-  console.log(redirectTo)
   const { email } = useLocalSearchParams()
 
   const [form, setForm] = useState({
@@ -30,7 +27,7 @@ const Signup = (props: Props) => {
     setLoading(true)
     try {
       auth.resetPassword(form.password)
-      await supabase.auth.resetPasswordForEmail(email as string, { redirectTo })
+      await supabase.auth.resetPasswordForEmail(email as string)
       toast.message('Please check your email')
     } catch (err: any) {
       toast.message(String(err.message || err))

@@ -105,7 +105,10 @@ export default function CommentModal() {
             </Animated.View> :
             null
           }
-          <ReplyField visible={state.isModalOpen} />
+          {state.isModalOpen ?
+            <ReplyField /> :
+            null
+          }
         </>
         }
       </ReplyProvider>

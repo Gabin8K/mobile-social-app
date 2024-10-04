@@ -10,11 +10,9 @@ import { StyleSheet, View } from "react-native";
 import Animated, { SlideInDown, SlideOutDown, useAnimatedKeyboard, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import useTheme from "@/hooks/useTheme";
 
-type Props = {
-  visible: boolean,
-}
 
-const ReplyField = memo(function ReplyField(props: Props) {
+
+const ReplyField = memo(function ReplyField() {
   const reply = useReply()
   const toast = useToast()
   const { session } = useAuth()
@@ -60,8 +58,6 @@ const ReplyField = memo(function ReplyField(props: Props) {
     }
   }, [])
 
-
-  if (!props.visible) return null
 
   return (
     <Animated.View

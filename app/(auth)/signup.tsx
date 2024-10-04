@@ -1,7 +1,6 @@
 import useToast from '@/hooks/useToast'
 import supabase from '@/services/supabase'
 import { px } from '@/utils/size'
-import { makeRedirectUri } from 'expo-auth-session'
 import { router, Stack } from 'expo-router'
 import React, { Fragment, useCallback, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
@@ -9,8 +8,6 @@ import { Button, Text, TextInput } from 'react-native-paper'
 
 type Props = {}
 
-
-const emailRedirectTo = makeRedirectUri();
 
 
 const Signup = (props: Props) => {
@@ -34,8 +31,7 @@ const Signup = (props: Props) => {
         email: form.email.trim(),
         password: form.password.trim(),
         options: {
-          data: { displayName: form.displayName.trim() },
-          emailRedirectTo,
+          data: { displayName: form.displayName.trim() }
         }
       })
       if (error) throw error
