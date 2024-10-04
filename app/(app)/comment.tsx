@@ -24,7 +24,7 @@ export default function CommentModal() {
   const [page, setPage] = useState<Page>({ from: 0, take: 2 })
   const [loading, setLoading] = useState(false)
 
-  const cantFetch = (page.count ?? 0) > (page.from);
+  const cantFetch = (page.count ?? 0) > page.from;
 
   const onGoback = (state: ModalState) => {
     if (state.isModalOpen) {
