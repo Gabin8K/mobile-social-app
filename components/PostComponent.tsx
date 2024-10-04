@@ -161,6 +161,7 @@ const PostComponent = (props: Props) => {
           {show ?
             <View style={styles.row3}>
               <TextInput
+                autoFocus
                 multiline
                 label={'Type your comment'}
                 mode={'flat'}

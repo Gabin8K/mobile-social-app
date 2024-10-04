@@ -11,7 +11,7 @@ import { listOfPostByUserId, ListOfPostQuery } from '@/services/supabase';
 import useToast from '@/hooks/useToast';
 import useBackhandler from '@/hooks/useBackhandler';
 import useAuth from '@/hooks/useAuth';
-import Animated, { LinearTransition, SlideInLeft } from 'react-native-reanimated';
+import Animated, { LinearTransition, SlideInLeft, SlideInUp } from 'react-native-reanimated';
 
 
 
@@ -85,17 +85,20 @@ export default function ThreadScreen() {
           />
         </Animated.View>
       </Appbar.Header>
-      <View style={styles.row}>
+      <Animated.View
+        entering={SlideInUp.duration(800)}
+        style={styles.row}
+      >
         {repliesArray.map((text, index) => (
           <Text
             key={index}
             variant={'bodyLarge'}
-            style={{ color: colors.primary}}
+            style={{ color: colors.primary }}
           >
             {text}
           </Text>
         ))}
-      </View>
+      </Animated.View>
       <Animated.FlatList
         data={data}
         renderItem={renderItem}
@@ -117,7 +120,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
   },
-  row:{
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
