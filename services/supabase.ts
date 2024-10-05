@@ -93,7 +93,7 @@ const listOfPostByUserIdQuery = (user_id: string) => supabase.from('post').selec
       display_name
     )
   )
-`)
+`, { count: 'exact' })
   .eq('user_id', user_id)
   .is('comment.parent_id', null);
 
@@ -117,13 +117,12 @@ const listOfPostQuery = supabase.from('post').select(`
       display_name
     )
   )
-`)
+`, { count: 'exact' })
   .is('comment.parent_id', null);
 
 
-export const listOfPost = async (user_id: string, page: Page) => {
-  const { data, error } = await listOfPostQuery.range(page.from, page.take);
-  const count = await (await supabase.from('post').select('*', { count: 'exact', head: true })).count
+export const listOfPost = async (user_id: string, from: number, to: number) => {
+  const { data, count, error } = await listOfPostQuery.range(from, to);
 
   if (!data) return { data: [], error }
   const mappingWithLike = data?.map(async (datum) => ({
@@ -146,9 +145,8 @@ export const listOfPost = async (user_id: string, page: Page) => {
 
 export type ListOfPostQuery = (QueryData<ReturnType<typeof listOfPostByUserIdQuery>>[number] & LikeField & { count?: number })[];
 
-export const listOfPostByUserId = async (user_id: string, page: Page) => {
-  const { data, error } = await listOfPostByUserIdQuery(user_id);
-  const count = await (await supabase.from('post').select('*', { count: 'exact', head: true })).count
+export const listOfPostByUserId = async (user_id: string, from: number, to: number) => {
+  const { data, count, error } = await listOfPostByUserIdQuery(user_id).range(from, to);
 
   if (!data) return { data: [], error }
   const mappingWithLike = data?.map(async (datum) => ({

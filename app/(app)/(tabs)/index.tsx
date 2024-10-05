@@ -1,10 +1,10 @@
 import PostComponent from '@/components/PostComponent';
 import useAuth from '@/hooks/useAuth';
 import useBackhandler from '@/hooks/useBackhandler';
+import { usePaginationRange } from '@/hooks/usePaginationRange';
 import useTheme from '@/hooks/useTheme';
 import useToast from '@/hooks/useToast';
 import supabase, { createPost, listOfPost, ListOfPostQuery } from '@/services/supabase';
-import { Page } from '@/types';
 import { px } from '@/utils/size';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -28,10 +28,10 @@ export default function HomeScreen() {
   const [loadingData, setLoadingData] = useState(false)
   const [showBackHandlerId, setShowBackHandlerId] = useState<string>()
   const [data, setData] = useState<ListOfPostQuery>([])
-  const [page, setPage] = useState<Page>({ from: 0, take: 3 })
+
+  const pagination = usePaginationRange({ itemsPerPage: 4 })
 
   const displayName = session?.user?.user_metadata?.displayName
-  const cantFetch = (page.count ?? 0) > page.take
 
   const onLogout = async () => {
     await supabase.auth.signOut()
@@ -71,40 +71,12 @@ export default function HomeScreen() {
 
 
   const onRefresh = () => {
-    const _page = {
-      from: 0,
-      take: 3,
-      count: page.count
-    }
-    loadData(_page)
+    pagination.refresh()
   }
 
   const loadMoreData = () => {
-    if (!cantFetch) return;
-    loadData()
+    pagination.nextPage()
   }
-
-
-  const loadData = useCallback((_page?: Page) => {
-    setLoadingData(true)
-    listOfPost(session?.user?.id as string, _page ?? page)
-      .then(({ data }) => {
-        if (_page) {
-          setData(data)
-          setPage(_page)
-          return;
-        }
-        setData(prev => [...prev, ...data])
-        setPage({
-          ...page,
-          from: page.take,
-          take: page.take + 3,
-          count: data[0]?.count
-        })
-      })
-      .catch(err => toast.message(String(err.message || err)))
-      .finally(() => setLoadingData(false))
-  }, [page])
 
 
   useBackhandler(() => {
@@ -117,8 +89,19 @@ export default function HomeScreen() {
 
 
   useEffect(() => {
-    loadData()
-  }, [])
+    setLoadingData(true)
+    listOfPost(session?.user?.id as string, pagination.from, pagination.to)
+      .then(({ data }) => {
+        if (pagination.currentPage === 1) {
+          setData(data)
+        } else {
+          setData(prev => [...prev, ...data])
+        }
+        pagination.setTotalItems(data?.[0]?.count ?? 0)
+      })
+      .catch(err => toast.message(String(err.message || err)))
+      .finally(() => setLoadingData(false))
+  }, [pagination.currentPage, pagination.from])
 
 
   return (
@@ -188,6 +171,8 @@ export default function HomeScreen() {
       <Animated.FlatList
         data={data}
         renderItem={renderItem}
+        onEndReached={loadMoreData}
+        onEndReachedThreshold={0.1}
         refreshControl={
           <RefreshControl
             progressBackgroundColor={colors.secondary}
@@ -195,11 +180,10 @@ export default function HomeScreen() {
             onRefresh={onRefresh}
           />
         }
-        onEndReached={loadMoreData}
-        onEndReachedThreshold={0.1}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         itemLayoutAnimation={LinearTransition}
+        ListFooterComponent={loadingData ? <ActivityIndicator size={px(40)} /> : null}
       />
     </View>
   );

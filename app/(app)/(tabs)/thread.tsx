@@ -4,14 +4,15 @@ import PostComponent from '@/components/PostComponent';
 import useTheme from '@/hooks/useTheme';
 import { px } from '@/utils/size';
 import { useEffect, useMemo, useState } from 'react';
-import { ListRenderItemInfo, StyleSheet, View } from 'react-native';
-import { Appbar, Text } from 'react-native-paper';
+import { ListRenderItemInfo, RefreshControl, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Appbar, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listOfPostByUserId, ListOfPostQuery } from '@/services/supabase';
 import useToast from '@/hooks/useToast';
 import useBackhandler from '@/hooks/useBackhandler';
 import useAuth from '@/hooks/useAuth';
 import Animated, { LinearTransition, SlideInLeft, SlideInUp } from 'react-native-reanimated';
+import { usePaginationRange } from '@/hooks/usePaginationRange';
 
 
 
@@ -22,7 +23,10 @@ export default function ThreadScreen() {
   const { session } = useAuth()
 
   const [showBackHandlerId, setShowBackHandlerId] = useState<string>()
-  const [data, setData] = useState<ListOfPostQuery | null>(null)
+  const [data, setData] = useState<ListOfPostQuery>([])
+  const [loading, setLoading] = useState(false)
+
+  const pagination = usePaginationRange({ itemsPerPage: 4 })
 
   const replieCount = data?.reduce((acc, post) => acc + post?.comment.length, 0) ?? 0;
   const repliesArray = [
@@ -45,6 +49,15 @@ export default function ThreadScreen() {
   }, [showBackHandlerId])
 
 
+  const onRefresh = () => {
+    pagination.refresh()
+  }
+
+  const loadMoreData = () => {
+    pagination.nextPage()
+  }
+
+
   useBackhandler(() => {
     if (showBackHandlerId) {
       setShowBackHandlerId(undefined)
@@ -54,10 +67,19 @@ export default function ThreadScreen() {
   })
 
   useEffect(() => {
-    listOfPostByUserId(session?.user?.id as string)
-      .then(({ data }) => setData(data))
+    setLoading(true)
+    listOfPostByUserId(session?.user?.id as string, pagination.from, pagination.to)
+      .then(({ data }) => {
+        if (pagination.currentPage === 1) {
+          setData(data)
+        } else {
+          setData(prev => [...prev, ...data])
+        }
+        pagination.setTotalItems(data?.[0]?.count ?? 0)
+      })
       .catch(err => toast.message(String(err.message || err)))
-  }, [])
+      .finally(() => setLoading(false))
+  }, [pagination.currentPage, pagination.from])
 
 
   return (
@@ -102,9 +124,19 @@ export default function ThreadScreen() {
       <Animated.FlatList
         data={data}
         renderItem={renderItem}
+        onEndReached={loadMoreData}
+        onEndReachedThreshold={0.1}
+        refreshControl={
+          <RefreshControl
+            progressBackgroundColor={colors.secondary}
+            refreshing={loading}
+            onRefresh={onRefresh}
+          />
+        }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         itemLayoutAnimation={LinearTransition}
+        ListFooterComponent={loading ? <ActivityIndicator size={px(40)} /> : null}
       />
     </>
   );
