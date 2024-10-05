@@ -1,13 +1,15 @@
 import PostComponent from '@/components/PostComponent';
 import useAuth from '@/hooks/useAuth';
 import useBackhandler from '@/hooks/useBackhandler';
+import useTheme from '@/hooks/useTheme';
 import useToast from '@/hooks/useToast';
 import supabase, { createPost, listOfPost, ListOfPostQuery } from '@/services/supabase';
+import { Page } from '@/types';
 import { px } from '@/utils/size';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ListRenderItemInfo, StyleSheet, View } from 'react-native';
+import { ListRenderItemInfo, RefreshControl, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Appbar, Avatar, IconButton, TextInput, Tooltip } from 'react-native-paper';
 import Animated, { LinearTransition, SlideInLeft, SlideInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,15 +20,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function HomeScreen() {
   const { top } = useSafeAreaInsets()
   const toast = useToast()
+  const { theme: { colors } } = useTheme()
   const { session, setSession } = useAuth()
-
-
-  const displayName = session?.user?.user_metadata?.displayName
 
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loadingData, setLoadingData] = useState(false)
   const [showBackHandlerId, setShowBackHandlerId] = useState<string>()
-  const [data, setData] = useState<ListOfPostQuery | null>(null)
+  const [data, setData] = useState<ListOfPostQuery>([])
+  const [page, setPage] = useState<Page>({ from: 0, take: 3 })
+
+  const displayName = session?.user?.user_metadata?.displayName
+  const cantFetch = (page.count ?? 0) > page.take
 
   const onLogout = async () => {
     await supabase.auth.signOut()
@@ -65,6 +70,43 @@ export default function HomeScreen() {
   }, [showBackHandlerId])
 
 
+  const onRefresh = () => {
+    const _page = {
+      from: 0,
+      take: 3,
+      count: page.count
+    }
+    loadData(_page)
+  }
+
+  const loadMoreData = () => {
+    if (!cantFetch) return;
+    loadData()
+  }
+
+
+  const loadData = useCallback((_page?: Page) => {
+    setLoadingData(true)
+    listOfPost(session?.user?.id as string, _page ?? page)
+      .then(({ data }) => {
+        if (_page) {
+          setData(data)
+          setPage(_page)
+          return;
+        }
+        setData(prev => [...prev, ...data])
+        setPage({
+          ...page,
+          from: page.take,
+          take: page.take + 3,
+          count: data[0]?.count
+        })
+      })
+      .catch(err => toast.message(String(err.message || err)))
+      .finally(() => setLoadingData(false))
+  }, [page])
+
+
   useBackhandler(() => {
     if (showBackHandlerId) {
       setShowBackHandlerId(undefined)
@@ -75,9 +117,7 @@ export default function HomeScreen() {
 
 
   useEffect(() => {
-    listOfPost(session?.user?.id as string)
-      .then(({ data }) => setData(data))
-      .catch(err => toast.message(String(err.message || err)))
+    loadData()
   }, [])
 
 
@@ -148,6 +188,15 @@ export default function HomeScreen() {
       <Animated.FlatList
         data={data}
         renderItem={renderItem}
+        refreshControl={
+          <RefreshControl
+            progressBackgroundColor={colors.secondary}
+            refreshing={loadingData}
+            onRefresh={onRefresh}
+          />
+        }
+        onEndReached={loadMoreData}
+        onEndReachedThreshold={0.1}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         itemLayoutAnimation={LinearTransition}

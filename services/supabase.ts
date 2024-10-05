@@ -121,11 +121,14 @@ const listOfPostQuery = supabase.from('post').select(`
   .is('comment.parent_id', null);
 
 
-export const listOfPost = async (user_id: string) => {
-  const { data, error } = await listOfPostQuery;
+export const listOfPost = async (user_id: string, page: Page) => {
+  const { data, error } = await listOfPostQuery.range(page.from, page.take);
+  const count = await (await supabase.from('post').select('*', { count: 'exact', head: true })).count
+
   if (!data) return { data: [], error }
   const mappingWithLike = data?.map(async (datum) => ({
     ...datum,
+    count,
     like_count: (await supabase.from('likes').select('*', { count: 'exact' }).eq('post_id', datum.id)).count,
     is_liked: !!(
       await supabase.from('likes')
@@ -141,14 +144,17 @@ export const listOfPost = async (user_id: string) => {
 }
 
 
-export type ListOfPostQuery = (QueryData<ReturnType<typeof listOfPostByUserIdQuery>>[number] & LikeField)[];
+export type ListOfPostQuery = (QueryData<ReturnType<typeof listOfPostByUserIdQuery>>[number] & LikeField & { count?: number })[];
 
-export const listOfPostByUserId = async (user_id: string) => {
+export const listOfPostByUserId = async (user_id: string, page: Page) => {
   const { data, error } = await listOfPostByUserIdQuery(user_id);
+  const count = await (await supabase.from('post').select('*', { count: 'exact', head: true })).count
+
   if (!data) return { data: [], error }
   const mappingWithLike = data?.map(async (datum) => ({
     ...datum,
-    like_count: (await supabase.from('likes').select('*', { count: 'exact' }).eq('post_id', datum.id)).count,
+    count,
+    like_count: (await supabase.from('likes').select('*', { count: 'exact', head: true }).eq('post_id', datum.id)).count,
     is_liked: !!(
       await supabase.from('likes')
         .select('*', { count: 'exact' })
@@ -197,7 +203,7 @@ export const getRecursiveCommentById = async (user_id: string, parent_id: string
   })
   const mappingWithCount = data?.map(async (datum: any) => ({
     ...datum,
-    like_count: (await supabase.from('likes').select('*', { count: 'exact' }).eq('comment_id', datum.id)).count,
+    like_count: (await supabase.from('likes').select('*', { count: 'exact', head: true }).eq('comment_id', datum.id)).count,
     is_liked: !!(
       await supabase.from('likes')
         .select('*', { count: 'exact' })
@@ -205,7 +211,7 @@ export const getRecursiveCommentById = async (user_id: string, parent_id: string
         .eq('user_id', user_id)
     ).count,
     child: await (async () => {
-      const count = (await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id)).count
+      const count = (await supabase.from('comment').select('*', { count: 'exact', head: true }).eq('parent_id', datum.id)).count
       const hasChild = (count ?? 0) > 0
       return {
         count,
@@ -229,7 +235,7 @@ export const getParentRecursiveCommentById = async (user_id: string, post_id: st
   })
   const mappingWithCount = data?.map(async (datum: any) => ({
     ...datum,
-    like_count: (await supabase.from('likes').select('*', { count: 'exact' }).eq('comment_id', datum.id)).count,
+    like_count: (await supabase.from('likes').select('*', { count: 'exact', head: true }).eq('comment_id', datum.id)).count,
     is_liked: !!(
       await supabase.from('likes')
         .select('*', { count: 'exact' })
@@ -237,7 +243,7 @@ export const getParentRecursiveCommentById = async (user_id: string, post_id: st
         .eq('user_id', user_id)
     ).count,
     child: await (async () => {
-      const count = (await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id)).count
+      const count = (await supabase.from('comment').select('*', { count: 'exact', head: true }).eq('parent_id', datum.id)).count
       const hasChild = (count ?? 0) > 0
       return {
         count,
@@ -262,7 +268,7 @@ export const getRecursiveCommentByPostId = async (user_id: string, post_id: stri
   })
   const mappingWithCount = data?.map(async (datum: any) => ({
     ...datum,
-    like_count: (await supabase.from('likes').select('*', { count: 'exact' }).eq('comment_id', datum.id)).count,
+    like_count: (await supabase.from('likes').select('*', { count: 'exact', head: true }).eq('comment_id', datum.id)).count,
     is_liked: !!(
       await supabase.from('likes')
         .select('*', { count: 'exact' })
@@ -270,7 +276,7 @@ export const getRecursiveCommentByPostId = async (user_id: string, post_id: stri
         .eq('user_id', user_id)
     ).count,
     child: await (async () => {
-      const count = (await supabase.from('comment').select('*', { count: 'exact' }).eq('parent_id', datum.id)).count
+      const count = (await supabase.from('comment').select('*', { count: 'exact', head: true }).eq('parent_id', datum.id)).count
       const hasChild = (count ?? 0) > 0
       return {
         count,
