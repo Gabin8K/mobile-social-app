@@ -24,7 +24,11 @@ export default function ThreadScreen() {
 
   const [showBackHandlerId, setShowBackHandlerId] = useState<string>()
   const [data, setData] = useState<ListOfPostQuery>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState({
+    post: false,
+    data: false,
+    refresh: false,
+  })
 
   const pagination = usePaginationRange({ itemsPerPage: 4 })
 
@@ -50,6 +54,7 @@ export default function ThreadScreen() {
 
 
   const onRefresh = () => {
+    setLoading(l => ({ ...l, refresh: true }))
     pagination.refresh()
   }
 
@@ -67,7 +72,7 @@ export default function ThreadScreen() {
   })
 
   useEffect(() => {
-    setLoading(true)
+    setLoading(l => ({ ...l, data: true }))
     listOfPostByUserId(session?.user?.id as string, pagination.from, pagination.to)
       .then(({ data }) => {
         if (pagination.currentPage === 1) {
@@ -78,7 +83,11 @@ export default function ThreadScreen() {
         pagination.setTotalItems(data?.[0]?.count ?? 0)
       })
       .catch(err => toast.message(String(err.message || err)))
-      .finally(() => setLoading(false))
+      .finally(() => setLoading(l => ({
+        ...l,
+        data: false,
+        refresh: false
+      })))
   }, [pagination.currentPage, pagination.from])
 
 
@@ -129,14 +138,14 @@ export default function ThreadScreen() {
         refreshControl={
           <RefreshControl
             progressBackgroundColor={colors.secondary}
-            refreshing={loading}
+            refreshing={loading.refresh}
             onRefresh={onRefresh}
           />
         }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         itemLayoutAnimation={LinearTransition}
-        ListFooterComponent={loading ? <ActivityIndicator size={px(40)} /> : null}
+        ListFooterComponent={loading.data ? <ActivityIndicator size={px(40)} /> : null}
       />
     </>
   );

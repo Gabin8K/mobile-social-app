@@ -24,8 +24,11 @@ export default function HomeScreen() {
   const { session, setSession } = useAuth()
 
   const [text, setText] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(false)
+  const [loading, setLoading] = useState({
+    post: false,
+    data: false,
+    refresh: false,
+  })
   const [showBackHandlerId, setShowBackHandlerId] = useState<string>()
   const [data, setData] = useState<ListOfPostQuery>([])
 
@@ -43,7 +46,7 @@ export default function HomeScreen() {
   }
 
   const onCreatePost = useCallback((text: string) => () => {
-    setLoading(true)
+    setLoading(l => ({ ...l, post: true }))
     createPost({
       user_id: session?.user?.id,
       content: text,
@@ -53,7 +56,7 @@ export default function HomeScreen() {
         setText('')
       })
       .catch(err => toast.message(String(err.message || err)))
-      .finally(() => setLoading(false))
+      .finally(() => setLoading(l => ({ ...l, post: false })))
   }, [])
 
 
@@ -71,6 +74,7 @@ export default function HomeScreen() {
 
 
   const onRefresh = () => {
+    setLoading(l => ({ ...l, refresh: true }))
     pagination.refresh()
   }
 
@@ -89,7 +93,7 @@ export default function HomeScreen() {
 
 
   useEffect(() => {
-    setLoadingData(true)
+    setLoading(l => ({ ...l, data: true }))
     listOfPost(session?.user?.id as string, pagination.from, pagination.to)
       .then(({ data }) => {
         if (pagination.currentPage === 1) {
@@ -100,7 +104,11 @@ export default function HomeScreen() {
         pagination.setTotalItems(data?.[0]?.count ?? 0)
       })
       .catch(err => toast.message(String(err.message || err)))
-      .finally(() => setLoadingData(false))
+      .finally(() => setLoading(l => ({
+        ...l,
+        data: false,
+        refresh: false
+      })))
   }, [pagination.currentPage, pagination.from])
 
 
@@ -160,11 +168,14 @@ export default function HomeScreen() {
           value={text}
           onChangeText={setText}
           right={
-            loading ?
-              <TextInput.Icon icon={() => <ActivityIndicator size={px(30)} />} /> :
-              text.trim() !== "" ?
-                <TextInput.Icon icon={'arrow-right'} onPress={onCreatePost(text)} /> :
-                null
+            text.trim() !== "" ?
+              <TextInput.Icon
+                icon={'arrow-right'}
+                loading={loading.post}
+                disabled={loading.post}
+                onPress={onCreatePost(text)}
+              /> :
+              null
           }
         />
       </Animated.View>
@@ -176,14 +187,14 @@ export default function HomeScreen() {
         refreshControl={
           <RefreshControl
             progressBackgroundColor={colors.secondary}
-            refreshing={loadingData}
+            refreshing={loading.refresh}
             onRefresh={onRefresh}
           />
         }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         itemLayoutAnimation={LinearTransition}
-        ListFooterComponent={loadingData ? <ActivityIndicator size={px(40)} /> : null}
+        ListFooterComponent={loading.data ? <ActivityIndicator size={px(40)} /> : null}
       />
     </View>
   );
@@ -199,7 +210,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   row: {
-    marginTop: px(40),
+    marginVertical: px(20),
     columnGap: px(20),
     flexDirection: 'row',
     paddingHorizontal: px(20),
