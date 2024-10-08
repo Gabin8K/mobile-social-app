@@ -18,7 +18,7 @@ const ReplyField = memo(function ReplyField() {
   const { session } = useAuth()
   const { post_id } = useLocalSearchParams()
 
-  const { theme: { colors } } = useTheme()
+  const { theme: { colors }, mode } = useTheme()
   const keyboard = useAnimatedKeyboard()
 
   const [loading, setLoading] = useState(false)
@@ -66,7 +66,7 @@ const ReplyField = memo(function ReplyField() {
       style={[
         uas,
         styles.container,
-        { backgroundColor: colors.elevation.level2 }
+        { backgroundColor: mode==='dark'? colors.elevation.level2:colors.elevation.level3 }
       ]}
     >
       <View style={styles.row}>
@@ -103,6 +103,7 @@ const ReplyField = memo(function ReplyField() {
 
 const styles = StyleSheet.create({
   container: {
+    paddingBottom: px(10),
     paddingLeft: px(20),
   },
   content: {

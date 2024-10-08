@@ -91,6 +91,7 @@ export default function CommentModal() {
           />
           {cantFetch ?
             <Animated.View
+              layout={LinearTransition}
               entering={SlideInDown.duration(500)}
               exiting={SlideOutDown.duration(500)}
             >

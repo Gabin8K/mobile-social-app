@@ -1,4 +1,3 @@
-import useAuth from '@/hooks/useAuth'
 import useToast from '@/hooks/useToast'
 import supabase from '@/services/supabase'
 import { px } from '@/utils/size'
@@ -12,7 +11,6 @@ type Props = {}
 
 const Signup = (props: Props) => {
 
-  const auth = useAuth();
   const { email } = useLocalSearchParams()
 
   const [form, setForm] = useState({
@@ -26,7 +24,6 @@ const Signup = (props: Props) => {
   const onSubmit = useCallback(async () => {
     setLoading(true)
     try {
-      auth.resetPassword(form.password)
       await supabase.auth.resetPasswordForEmail(email as string)
       toast.message('Please check your email')
     } catch (err: any) {
