@@ -24,3 +24,9 @@ export type LikeField = {
   like_count: number,
   is_liked: boolean,
 }
+
+export type ConfirmResetPassword = {
+  email: string,
+  code: string,
+  password: string,
+}

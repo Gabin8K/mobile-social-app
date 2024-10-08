@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, PostgrestError, QueryData } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
 import { Tables } from './database.types';
-import { LikeField, LikeParam, Page } from '@/types';
+import { ConfirmResetPassword, LikeField, LikeParam, Page } from '@/types';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ADMIN_KEY as string;
@@ -289,6 +289,41 @@ export const getRecursiveCommentByPostId = async (user_id: string, post_id: stri
   };
 }
 
+
+
+export const resetPassword = async (email: string) => {
+  const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_FUNCTION_AUTH_URL}/reset-password`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    }
+  );
+  if (response.ok) {
+    const data = await response.json();
+    return { data, error: null }
+  }
+  const error = await response.json();
+  return { data: null, error }
+}
+
+
+
+export const confirmPassword = async (body: ConfirmResetPassword) => {
+  const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_FUNCTION_AUTH_URL}/confirm-reset-password`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }
+  );
+  if (response.ok) {
+    const data = await response.json();
+    return { data, error: null }
+  }
+  const error = await response.json();
+  return { data: null, error }
+}
 
 
 

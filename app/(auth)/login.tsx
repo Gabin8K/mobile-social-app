@@ -1,6 +1,6 @@
 import useTheme from '@/hooks/useTheme'
 import useToast from '@/hooks/useToast'
-import supabase from '@/services/supabase'
+import supabase, { resetPassword } from '@/services/supabase'
 import { px } from '@/utils/size'
 import { Link, router } from 'expo-router'
 import React, { useCallback, useState } from 'react'
@@ -51,10 +51,16 @@ const Login = (props: Props) => {
       toast.message('Please enter your email')
       return;
     }
-    router.navigate({
-      pathname: '/(auth)/reset',
-      params: { email: form.email }
-    })
+    try {
+      const { error } = await resetPassword(form.email)
+      if (error) throw error
+      router.navigate({
+        pathname: '/(auth)/reset',
+        params: { email: form.email }
+      })
+    } catch (err: any) {
+      toast.message(String(err.message || err))
+    }
   }, [form.email])
 
 

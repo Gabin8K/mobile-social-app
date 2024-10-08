@@ -40,7 +40,10 @@ authRouter
       if (!body.code) throw new Error('Code is required')
       if (!body.password) throw new Error('Password is required')
 
-      const { data } = await supabase.from('reset_password').select('*').eq('email', body.email)
+      const { data } = await supabase.from('reset_password').select('*')
+      .eq('email', body.email)
+      .eq('code', body.code)
+      
       const reset = data?.[0]
 
       if (!reset) throw new Error('Validation code not found')

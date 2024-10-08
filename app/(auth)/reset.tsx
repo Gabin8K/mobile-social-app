@@ -1,7 +1,10 @@
+import OtpInput from '@/components/OtpInput'
+import useTheme from '@/hooks/useTheme'
 import useToast from '@/hooks/useToast'
-import supabase from '@/services/supabase'
+import supabase, { confirmPassword } from '@/services/supabase'
 import { px } from '@/utils/size'
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import { router, Stack, useLocalSearchParams } from 'expo-router'
 import React, { Fragment, useCallback, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Button, Text, TextInput } from 'react-native-paper'
@@ -12,9 +15,12 @@ type Props = {}
 const Signup = (props: Props) => {
 
   const { email } = useLocalSearchParams()
+  const { theme: { colors } } = useTheme()
 
   const [form, setForm] = useState({
     password: '',
+    code: '',
+    errorCode: false
   })
 
   const toast = useToast()
@@ -24,8 +30,18 @@ const Signup = (props: Props) => {
   const onSubmit = useCallback(async () => {
     setLoading(true)
     try {
-      await supabase.auth.resetPasswordForEmail(email as string)
-      toast.message('Please check your email')
+      const { error } = await confirmPassword({
+        email: email as string,
+        code: form.code,
+        password: form.password
+      })
+      if (error) throw error
+      const request = await supabase.auth.signInWithPassword({
+        email: email as string,
+        password: form.password.trim(),
+      })
+      if (request.error) throw request.error
+      router.replace('/(app)')
     } catch (err: any) {
       toast.message(String(err.message || err))
       setLoading(false)
@@ -45,13 +61,24 @@ const Signup = (props: Props) => {
       />
       <View style={styles.container}>
         <Text variant={'displayLarge'}>Reset Password</Text>
-        <View style={styles.form}>
+        <View style={styles.row}>
+          <Ionicons
+            name={'mail-unread'}
+            size={px(40)}
+            color={colors.outlineVariant}
+          />
           <Text
             variant={'titleLarge'}
             style={styles.email}
           >
             {email}
           </Text>
+        </View>
+        <View style={styles.form}>
+          <OtpInput
+            value={form.code}
+            onChange={(code) => setForm({ ...form, code })}
+          />
           <TextInput
             secureTextEntry={!show}
             disabled={loading}
@@ -67,7 +94,7 @@ const Signup = (props: Props) => {
           />
           <Button
             loading={loading}
-            disabled={loading || form.password.length < 4}
+            disabled={loading || form.password.length < 4 || form.code.length < 5}
             style={{ marginVertical: px(40) }}
             mode={'contained'}
             onPress={onSubmit}
@@ -89,8 +116,14 @@ const styles = StyleSheet.create({
   form: {
     width: '100%',
     paddingHorizontal: px(50),
-    marginTop: px(20),
-    rowGap: px(20),
+    marginTop: px(100),
+    rowGap: px(30),
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    columnGap: px(10),
   },
   email: {
     textAlign: 'center'
