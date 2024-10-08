@@ -77,7 +77,7 @@ const Signup = (props: Props) => {
         <View style={styles.form}>
           <OtpInput
             value={form.code}
-            onChange={(code) => setForm({ ...form, code })}
+            onChange={(code) =>setForm({ ...form, code })}
           />
           <TextInput
             secureTextEntry={!show}
@@ -90,7 +90,7 @@ const Signup = (props: Props) => {
                 icon={'eye'}
               />
             }
-            onChangeText={(text) => setForm({ ...form, password: text })}
+            onChangeText={(password) => setForm({ ...form, password })}
           />
           <Button
             loading={loading}
