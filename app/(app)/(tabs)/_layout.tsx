@@ -3,6 +3,7 @@ import { createMaterialBottomTabNavigator, MaterialBottomTabNavigationOptions } 
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { withLayoutContext } from "expo-router";
 import { px } from '@/utils/size';
+import RefreshTabsProvider from '@/providers/RefreshTabsProvider';
 
 
 const { Navigator } = createMaterialBottomTabNavigator();
@@ -17,38 +18,40 @@ export const MaterialBottomTabs = withLayoutContext<
 export default function TabLayout() {
 
   return (
-    <MaterialBottomTabs
-      safeAreaInsets={{
-        top: 0,
-        bottom: 0
-      }}
-    >
-      <MaterialBottomTabs.Screen
-        name="index"
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons
-              name={'home'}
-              color={color}
-              size={px(46)}
-            />
-          ),
+    <RefreshTabsProvider>
+      <MaterialBottomTabs
+        safeAreaInsets={{
+          top: 0,
+          bottom: 0
         }}
-      />
-      <MaterialBottomTabs.Screen
-        name="thread"
-        options={{
-          title: 'Thread',
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons
-              name={'alternate-email'}
-              color={color}
-              size={px(46)}
-            />
-          ),
-        }}
-      />
-    </MaterialBottomTabs>
+      >
+        <MaterialBottomTabs.Screen
+          name="index"
+          options={{
+            tabBarLabel: 'Home',
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons
+                name={'home'}
+                color={color}
+                size={px(46)}
+              />
+            ),
+          }}
+        />
+        <MaterialBottomTabs.Screen
+          name="thread"
+          options={{
+            title: 'Thread',
+            tabBarIcon: ({ color }) => (
+              <MaterialIcons
+                name={'alternate-email'}
+                color={color}
+                size={px(46)}
+              />
+            ),
+          }}
+        />
+      </MaterialBottomTabs>
+    </RefreshTabsProvider>
   );
 }

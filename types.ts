@@ -5,6 +5,7 @@ export type Page = {
   count?: number,
 }
 
+
 export type LikeParam = {
   user_id: string,
   post_id: string | null,

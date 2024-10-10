@@ -25,10 +25,16 @@ export function usePaginationRange(props: Props) {
     setTotalItems(0);
   }
 
+  const reset = () => {
+    setCurrentPage(1);
+    setTotalItems(0);
+  }
+
   return {
     setTotalItems,
     nextPage,
     refresh,
+    reset,
     from,
     to,
     currentPage,

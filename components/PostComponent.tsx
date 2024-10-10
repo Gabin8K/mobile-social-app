@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react'
 import { StyleSheet, View, ViewProps } from 'react-native'
 import { Avatar, Button, Card, IconButton, Text, TextInput } from 'react-native-paper'
 import { px } from '@/utils/size'
-import { router } from 'expo-router'
+import { router, usePathname } from 'expo-router'
 import { createComment, createRepy, ListOfPostQuery, updateLikes } from '@/services/supabase'
 import useToast from '@/hooks/useToast'
 import useAuth from '@/hooks/useAuth'
@@ -10,6 +10,7 @@ import { LikeParam, LikeState } from '@/types'
 import { AntDesign } from '@expo/vector-icons'
 import Animated, { LinearTransition, SlideInLeft } from 'react-native-reanimated'
 import useTheme from '@/hooks/useTheme'
+import { useRefreshTabs } from '@/providers/RefreshTabsProvider'
 
 type Props = ViewProps & {
   index: number,
@@ -34,6 +35,9 @@ const PostComponent = (props: Props) => {
   const toast = useToast()
   const { session } = useAuth()
   const { theme: { colors } } = useTheme()
+  const pathname = usePathname()
+
+  const refreshTabs = useRefreshTabs()
 
   const [loading, setLoading] = useState(false)
   const [text, setText] = useState('')
@@ -76,6 +80,12 @@ const PostComponent = (props: Props) => {
         isLiked: !like.isLiked,
         loading: false
       }))
+      if(pathname === '/') {
+        refreshTabs.update('thread')  
+      }
+      if(pathname === '/thread') {
+        refreshTabs.update('index')
+      }
     } catch (err: any) {
       toast.message(String(err.message || err))
       setLike(like => ({ ...like, loading: false }))

@@ -13,6 +13,7 @@ import useBackhandler from '@/hooks/useBackhandler';
 import useAuth from '@/hooks/useAuth';
 import Animated, { LinearTransition, SlideInLeft, SlideInUp } from 'react-native-reanimated';
 import { usePaginationRange } from '@/hooks/usePaginationRange';
+import { useRefreshTabs } from '@/providers/RefreshTabsProvider';
 
 
 
@@ -31,6 +32,7 @@ export default function ThreadScreen() {
   })
 
   const pagination = usePaginationRange({ itemsPerPage: 4 })
+  const refrestTabs = useRefreshTabs()
 
   const replieCount = data?.reduce((acc, post) => acc + post?.comment.length, 0) ?? 0;
   const repliesArray = [
@@ -70,6 +72,17 @@ export default function ThreadScreen() {
     }
     return false
   })
+
+
+  useEffect(() => {
+   if(refrestTabs.isUpdateThread) {
+    setData([])
+    refrestTabs.clear()
+    pagination.reset()
+   }
+  }, [refrestTabs.isUpdateThread])
+  
+
 
   useEffect(() => {
     setLoading(l => ({ ...l, data: true }))

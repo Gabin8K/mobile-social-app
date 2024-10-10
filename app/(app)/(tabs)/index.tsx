@@ -1,17 +1,19 @@
+import HeaderIndex from '@/components/HeaderIndex';
 import PostComponent from '@/components/PostComponent';
 import useAuth from '@/hooks/useAuth';
 import useBackhandler from '@/hooks/useBackhandler';
 import { usePaginationRange } from '@/hooks/usePaginationRange';
 import useTheme from '@/hooks/useTheme';
 import useToast from '@/hooks/useToast';
-import supabase, { createPost, listOfPost, ListOfPostQuery } from '@/services/supabase';
+import { useRefreshTabs } from '@/providers/RefreshTabsProvider';
+import supabase, { listOfPost, ListOfPostQuery } from '@/services/supabase';
 import { px } from '@/utils/size';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ListRenderItemInfo, RefreshControl, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Appbar, Avatar, IconButton, TextInput, Tooltip } from 'react-native-paper';
-import Animated, { LinearTransition, SlideInLeft, SlideInUp } from 'react-native-reanimated';
+import { ActivityIndicator, Appbar, IconButton, Tooltip } from 'react-native-paper';
+import Animated, { LinearTransition, SlideInLeft } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
@@ -23,7 +25,6 @@ export default function HomeScreen() {
   const { theme: { colors } } = useTheme()
   const { session, setSession } = useAuth()
 
-  const [text, setText] = useState('')
   const [loading, setLoading] = useState({
     post: false,
     data: false,
@@ -33,8 +34,7 @@ export default function HomeScreen() {
   const [data, setData] = useState<ListOfPostQuery>([])
 
   const pagination = usePaginationRange({ itemsPerPage: 4 })
-
-  const displayName = session?.user?.user_metadata?.displayName
+  const refrestTabs = useRefreshTabs()
 
   const onLogout = async () => {
     await supabase.auth.signOut()
@@ -44,20 +44,6 @@ export default function HomeScreen() {
   const onGoToSetting = () => {
     router.navigate('/setting')
   }
-
-  const onCreatePost = useCallback((text: string) => () => {
-    setLoading(l => ({ ...l, post: true }))
-    createPost({
-      user_id: session?.user?.id,
-      content: text,
-    })
-      .then(({ error }) => {
-        if (error) throw error
-        setText('')
-      })
-      .catch(err => toast.message(String(err.message || err)))
-      .finally(() => setLoading(l => ({ ...l, post: false })))
-  }, [])
 
 
   const renderItem = useMemo(() => function ListItem({ item, index }: ListRenderItemInfo<ListOfPostQuery[number]>) {
@@ -90,6 +76,15 @@ export default function HomeScreen() {
     }
     return false
   })
+
+
+  useEffect(() => {
+    if (refrestTabs.isUpdateIndex) {
+      setData([])
+      refrestTabs.clear()
+      pagination.reset()
+    }
+  }, [refrestTabs.isUpdateIndex])
 
 
   useEffect(() => {
@@ -153,32 +148,10 @@ export default function HomeScreen() {
           </Tooltip>
         </View>
       </Appbar.Header>
-      <Animated.View
-        style={styles.row}
-        entering={SlideInUp.duration(500)}
-      >
-        <Avatar.Text
-          size={px(100)}
-          label={`${displayName?.charAt?.(0) ?? ''}${displayName?.charAt?.(1) ?? ''}`}
-        />
-        <TextInput
-          multiline
-          placeholder={'What\'s up?'}
-          style={{ flex: 1 }}
-          value={text}
-          onChangeText={setText}
-          right={
-            text.trim() !== "" ?
-              <TextInput.Icon
-                icon={'arrow-right'}
-                loading={loading.post}
-                disabled={loading.post}
-                onPress={onCreatePost(text)}
-              /> :
-              null
-          }
-        />
-      </Animated.View>
+      <HeaderIndex 
+        loading={loading}
+        setLoading={setLoading}
+      />
       <Animated.FlatList
         data={data}
         renderItem={renderItem}
@@ -208,12 +181,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'center',
-  },
-  row: {
-    marginVertical: px(20),
-    columnGap: px(20),
-    flexDirection: 'row',
-    paddingHorizontal: px(20),
   },
   headerRow: {
     flexDirection: 'row',
