@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { StyleSheet, View, ViewProps } from 'react-native'
+import { Image, StyleSheet, View, ViewProps } from 'react-native'
 import { Avatar, Button, Card, IconButton, Text, TextInput } from 'react-native-paper'
 import { px } from '@/utils/size'
 import { router, usePathname } from 'expo-router'
@@ -80,10 +80,10 @@ const PostComponent = (props: Props) => {
         isLiked: !like.isLiked,
         loading: false
       }))
-      if(pathname === '/') {
-        refreshTabs.update('thread')  
+      if (pathname === '/') {
+        refreshTabs.update('thread')
       }
-      if(pathname === '/thread') {
+      if (pathname === '/thread') {
         refreshTabs.update('index')
       }
     } catch (err: any) {
@@ -145,6 +145,13 @@ const PostComponent = (props: Props) => {
               {post.content}
             </Text>
           </Card.Content>
+          {post.image_url ?
+            <Image
+              source={{ uri: post.image_url }}
+              style={[styles.image, { backgroundColor: 'rgba(0,0,0,0.1)' }]}
+            /> :
+            null
+          }
           <View style={styles.footer}>
             <Button
               loading={like.loading}
@@ -222,7 +229,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: px(30),
     paddingBottom: px(10),
+  },
+  image: {
+    width: '100%',
+    height: px(350),
+    marginTop: px(20),
+    objectFit: 'contain',
   }
 })

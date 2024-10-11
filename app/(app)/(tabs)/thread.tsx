@@ -75,13 +75,13 @@ export default function ThreadScreen() {
 
 
   useEffect(() => {
-   if(refrestTabs.isUpdateThread) {
-    setData([])
-    refrestTabs.clear()
-    pagination.reset()
-   }
+    if (refrestTabs.isUpdateThread) {
+      setData([])
+      refrestTabs.clear()
+      pagination.reset()
+    }
   }, [refrestTabs.isUpdateThread])
-  
+
 
 
   useEffect(() => {

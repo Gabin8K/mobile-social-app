@@ -106,18 +106,21 @@ export type Database = {
           content: string | null
           created_at: string | null
           id: string
+          image_path: string | null
           user_id: string
         }
         Insert: {
           content?: string | null
           created_at?: string | null
           id?: string
+          image_path?: string | null
           user_id: string
         }
         Update: {
           content?: string | null
           created_at?: string | null
           id?: string
+          image_path?: string | null
           user_id?: string
         }
         Relationships: [
@@ -156,6 +159,27 @@ export type Database = {
           },
         ]
       }
+      reset_password: {
+        Row: {
+          code: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -163,7 +187,6 @@ export type Database = {
     Functions: {
       comment_by_post: {
         Args: {
-          param_user_id: string
           param_post_id: string
           param_take: number
           param_start: number
@@ -173,8 +196,22 @@ export type Database = {
           user_id: string
           content: string
           created_at: string
-          likes_count: number
-          is_like: number
+          count: number
+          display_name: string
+          email: string
+        }[]
+      }
+      parent_recursive_comment: {
+        Args: {
+          param_post_id: string
+          param_take: number
+          param_start: number
+        }
+        Returns: {
+          id: string
+          user_id: string
+          content: string
+          created_at: string
           count: number
           display_name: string
           email: string
@@ -191,7 +228,6 @@ export type Database = {
           user_id: string
           content: string
           created_at: string
-          likes: number
           count: number
           display_name: string
           email: string

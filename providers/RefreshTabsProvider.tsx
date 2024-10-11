@@ -37,10 +37,7 @@ const RefreshTabsProvider: FunctionComponent<PropsWithChildren> = ({ children })
 
 
   const clear = () => {
-    setState({
-      isUpdateThread: false,
-      isUpdateIndex: false,
-    })
+    setState({})
   }
 
   return (

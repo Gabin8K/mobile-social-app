@@ -31,3 +31,9 @@ export type ConfirmResetPassword = {
   code: string,
   password: string,
 }
+
+export type SupabaseFile = {
+  uri:any,
+  name: string,
+  type: string,
+}

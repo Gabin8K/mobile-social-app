@@ -2,10 +2,14 @@ import useAuth from "@/hooks/useAuth";
 import useToast from "@/hooks/useToast";
 import { createPost } from "@/services/supabase";
 import { px } from "@/utils/size";
-import { memo, useCallback, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Fragment, memo, useCallback, useState } from "react";
+import { Image, StyleSheet, View } from "react-native";
 import { Avatar, IconButton, TextInput } from "react-native-paper";
 import Animated, { SlideInRight, SlideInUp, SlideOutRight } from "react-native-reanimated";
+import * as ImagePicker from 'expo-image-picker';
+import { SupabaseFile } from "@/types";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import useTheme from "@/hooks/useTheme";
 
 
 type Props = {
@@ -24,30 +28,54 @@ type Loading = {
 const HeaderIndex = memo(function HeaderIndex(props: Props) {
   const { loading, setLoading } = props;
   const { session } = useAuth()
+
   const toast = useToast()
+  const { theme: { colors } } = useTheme()
 
   const [text, setText] = useState('')
+  const [file, setFile] = useState<SupabaseFile>()
+  const [hasPermission, setHasPermission] = useState<boolean>()
+  const [_, requestPermission] = ImagePicker.useMediaLibraryPermissions();
 
   const displayName = session?.user?.user_metadata?.displayName
   const visible = text.trim() !== "";
 
   const onCreatePost = useCallback((text: string) => () => {
     setLoading(l => ({ ...l, post: true }))
-    createPost({
-      user_id: session?.user?.id,
-      content: text,
-    })
+    createPost({ user_id: session?.user?.id, content: text }, file)
       .then(({ error }) => {
         if (error) throw error
         setText('')
       })
       .catch(err => toast.message(String(err.message || err)))
       .finally(() => setLoading(l => ({ ...l, post: false })))
-  }, [])
+  }, [file])
 
 
-  const onCreateFile = useCallback(() => {
-
+  const onCreateFile = useCallback(async () => {
+    try {
+      if (hasPermission === undefined) {
+        const result = await requestPermission()
+        if (!result.granted) {
+          toast.message('Sorry, we need camera roll permissions to make this work!')
+          return;
+        }
+        setHasPermission(result.granted)
+      }
+      const document = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+      })
+      if (document.canceled) return;
+      const _file: SupabaseFile = {
+        uri: document.assets[0].uri as string,
+        name: document.assets[0].fileName as string,
+        type: document.assets[0]?.mimeType as string,
+      }
+      setFile(_file)
+    } catch (err: any) {
+      toast.message(String(err.message || err))
+    }
   }, [])
 
 
@@ -75,14 +103,36 @@ const HeaderIndex = memo(function HeaderIndex(props: Props) {
             entering={SlideInRight.duration(500)}
             exiting={SlideOutRight.duration(500)}
           >
-            <IconButton
-              size={px(40)}
-              icon={'image-plus'}
-              loading={loading.post}
-              disabled={loading.post}
-              onPress={onCreateFile}
-              style={{ margin: 0 }}
-            />
+            {hasPermission !== false ?
+              <Fragment>
+                {file ?
+                  <MaterialCommunityIcons
+                    name={'close'}
+                    size={px(30)}
+                    color={colors.tertiary}
+                    onPress={() => setFile(undefined)}
+                    style={styles.close}
+                  /> :
+                  null
+                }
+                <IconButton
+                  size={px(40)}
+                  icon={!file ?
+                    'image-plus' :
+                    () => (
+                      <Image
+                        source={{ uri: file?.uri }}
+                        style={styles.image}
+                      />
+                    )
+                  }
+                  disabled={loading.post}
+                  onPress={onCreateFile}
+                  style={{ margin: 0 }}
+                />
+              </Fragment> :
+              null
+            }
             <IconButton
               size={px(40)}
               icon={'arrow-right'}
@@ -123,6 +173,17 @@ const styles = StyleSheet.create({
   blank: {
     width: px(230),
     height: px(20)
+  },
+  image: {
+    width: px(60),
+    height: px(60),
+    objectFit: 'contain'
+  },
+  close: {
+    position: 'absolute',
+    top: px(-15),
+    left: px(40),
+    zIndex: 1,
   }
 })
 
