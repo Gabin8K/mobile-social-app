@@ -16,8 +16,8 @@ type Props = ViewProps & {
   index: number,
   show?: boolean,
   myPost?: boolean,
-  post: ListOfPostQuery[number]
-  onShow?: (id?: string) => void
+  post: ListOfPostQuery[number],
+  onShow?: (id?: string) => void,
 }
 
 type Response = {

@@ -35,7 +35,10 @@ export const createPost = async (post: Partial<Tables<'post'>>, file?: SupabaseF
     const _post = data?.[0] as Tables<'post'>;
     const response = await uploadFile(file, _post.user_id as string, _post.id as string)
     if (response.error) throw response.error;
-    await supabase.from('post').update({ image_path: response.data?.path as string }).eq('id', _post.id)
+    await supabase.from('post')
+    .update({ image_path: response.data?.path as string })
+    .eq('id', _post.id)
+    .select()
   }
   return {
     data,
@@ -47,6 +50,7 @@ export const createPost = async (post: Partial<Tables<'post'>>, file?: SupabaseF
 
 export const createComment = async (comment: Partial<Tables<'comment'>>) => {
   const { data, error } = await supabase.from('comment').insert(comment)
+    .select()
     .select();
   return {
     data,
@@ -103,7 +107,8 @@ const listOfPostByUserIdQuery = (user_id: string) => supabase.from('post').selec
   )
 `, { count: 'exact' })
   .eq('user_id', user_id)
-  .is('comment.parent_id', null);
+  .is('comment.parent_id', null)
+  .order('created_at', { ascending: false });
 
 
 const listOfPostQuery = supabase.from('post').select(`
@@ -127,7 +132,8 @@ const listOfPostQuery = supabase.from('post').select(`
     )
   )
 `, { count: 'exact' })
-  .is('comment.parent_id', null);
+  .is('comment.parent_id', null)
+  .order('created_at', { ascending: false });
 
 
 export const listOfPost = async (user_id: string, from: number, to: number) => {

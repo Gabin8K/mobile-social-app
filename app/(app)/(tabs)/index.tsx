@@ -11,7 +11,7 @@ import { px } from '@/utils/size';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ListRenderItemInfo, RefreshControl, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, ListRenderItemInfo, RefreshControl, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Appbar, IconButton, Tooltip } from 'react-native-paper';
 import Animated, { LinearTransition, SlideInLeft } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -108,7 +108,10 @@ export default function HomeScreen() {
 
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={'padding'}
+      style={styles.container}
+    >
       <Appbar.Header
         elevated
         mode={'small'}
@@ -148,9 +151,10 @@ export default function HomeScreen() {
           </Tooltip>
         </View>
       </Appbar.Header>
-      <HeaderIndex 
+      <HeaderIndex
         loading={loading}
         setLoading={setLoading}
+        onCreated={setData}
       />
       <Animated.FlatList
         data={data}
@@ -169,7 +173,7 @@ export default function HomeScreen() {
         itemLayoutAnimation={LinearTransition}
         ListFooterComponent={loading.data ? <ActivityIndicator size={px(40)} /> : null}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -1,6 +1,6 @@
 import useAuth from "@/hooks/useAuth";
 import useToast from "@/hooks/useToast";
-import { createPost } from "@/services/supabase";
+import { createPost, ListOfPostQuery } from "@/services/supabase";
 import { px } from "@/utils/size";
 import { Fragment, memo, useCallback, useState } from "react";
 import { Image, StyleSheet, View } from "react-native";
@@ -15,6 +15,7 @@ type Props = {
   loading: Loading,
   displayName?: string,
   setLoading: React.Dispatch<React.SetStateAction<Loading>>,
+  onCreated?: React.Dispatch<React.SetStateAction<ListOfPostQuery>>,
 }
 
 type Loading = {
@@ -25,14 +26,14 @@ type Loading = {
 
 
 const HeaderIndex = memo(function HeaderIndex(props: Props) {
-  const { loading, setLoading } = props;
+  const { loading, setLoading, onCreated } = props;
   const { session } = useAuth()
 
   const toast = useToast()
+  const media = useMediaFile()
   const { theme: { colors } } = useTheme()
 
   const [text, setText] = useState('')
-  const media = useMediaFile()
 
   const displayName = session?.user?.user_metadata?.displayName
   const visible = text.trim() !== "";
@@ -40,13 +41,27 @@ const HeaderIndex = memo(function HeaderIndex(props: Props) {
   const onCreatePost = useCallback((text: string) => () => {
     setLoading(l => ({ ...l, post: true }))
     createPost({ user_id: session?.user?.id, content: text }, media.file)
-      .then(({ error }) => {
+      .then(({ error, data }) => {
         if (error) throw error
+        const _post = {
+          ...data?.[0],
+          count: 0,
+          image_url: undefined,
+          like_count: 0,
+          is_liked: false,
+          comment: [],
+          profiles: {
+            id: session?.user?.id,
+            email: session?.user?.email,
+            display_name: session?.user?.user_metadata?.displayName,
+          }
+        }
+        onCreated?.(post => [_post, ...post])
         setText('')
       })
       .catch(err => toast.message(String(err.message || err)))
       .finally(() => setLoading(l => ({ ...l, post: false })))
-  }, [media.file])
+  }, [media.file, onCreated])
 
 
   const onCreateFile = useCallback(async () => {

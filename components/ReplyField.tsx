@@ -7,7 +7,7 @@ import useToast from "@/hooks/useToast";
 import useAuth from "@/hooks/useAuth";
 import { useLocalSearchParams } from "expo-router";
 import { StyleSheet, View } from "react-native";
-import Animated, { SlideInDown, SlideOutDown, useAnimatedKeyboard, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import Animated, { SlideInDown, SlideOutDown, useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated";
 import useTheme from "@/hooks/useTheme";
 
 
@@ -52,7 +52,7 @@ const ReplyField = memo(function ReplyField() {
 
 
   const uas = useAnimatedStyle(() => {
-    const translateY = withTiming(-keyboard.height.value)
+    const translateY = -keyboard.height.value
     return {
       transform: [{ translateY }]
     }
@@ -66,7 +66,7 @@ const ReplyField = memo(function ReplyField() {
       style={[
         uas,
         styles.container,
-        { backgroundColor: mode==='dark'? colors.elevation.level2:colors.elevation.level3 }
+        { backgroundColor: mode === 'dark' ? colors.elevation.level2 : colors.elevation.level3 }
       ]}
     >
       <View style={styles.row}>

@@ -4,7 +4,7 @@ import PostComponent from '@/components/PostComponent';
 import useTheme from '@/hooks/useTheme';
 import { px } from '@/utils/size';
 import { useEffect, useMemo, useState } from 'react';
-import { ListRenderItemInfo, RefreshControl, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, ListRenderItemInfo, RefreshControl, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Appbar, Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { listOfPostByUserId, ListOfPostQuery } from '@/services/supabase';
@@ -105,7 +105,10 @@ export default function ThreadScreen() {
 
 
   return (
-    <>
+    <KeyboardAvoidingView
+      behavior={'padding'}
+      style={styles.container}
+    >
       <Appbar.Header
         elevated
         mode={'small'}
@@ -160,11 +163,14 @@ export default function ThreadScreen() {
         itemLayoutAnimation={LinearTransition}
         ListFooterComponent={loading.data ? <ActivityIndicator size={px(40)} /> : null}
       />
-    </>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   content: {
     marginTop: px(30),
     paddingBottom: px(50),
