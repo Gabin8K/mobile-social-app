@@ -61,7 +61,7 @@ export default function HomeScreen() {
 
   const onRefresh = () => {
     setLoading(l => ({ ...l, refresh: true }))
-    pagination.refresh()
+    pagination.reset()
   }
 
   const loadMoreData = () => {
@@ -104,7 +104,7 @@ export default function HomeScreen() {
         data: false,
         refresh: false
       })))
-  }, [pagination.currentPage, pagination.from])
+  }, [pagination.update])
 
 
   return (

@@ -57,7 +57,7 @@ export default function ThreadScreen() {
 
   const onRefresh = () => {
     setLoading(l => ({ ...l, refresh: true }))
-    pagination.refresh()
+    pagination.reset()
   }
 
   const loadMoreData = () => {
@@ -101,7 +101,7 @@ export default function ThreadScreen() {
         data: false,
         refresh: false
       })))
-  }, [pagination.currentPage, pagination.from])
+  }, [pagination.update])
 
 
   return (

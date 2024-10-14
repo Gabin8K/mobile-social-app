@@ -6,10 +6,9 @@ import { Fragment, memo, useCallback, useState } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import { Avatar, IconButton, TextInput } from "react-native-paper";
 import Animated, { SlideInRight, SlideInUp, SlideOutRight } from "react-native-reanimated";
-import * as ImagePicker from 'expo-image-picker';
-import { SupabaseFile } from "@/types";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import useTheme from "@/hooks/useTheme";
+import useMediaFile from "../hooks/useMediaFile";
 
 
 type Props = {
@@ -33,46 +32,26 @@ const HeaderIndex = memo(function HeaderIndex(props: Props) {
   const { theme: { colors } } = useTheme()
 
   const [text, setText] = useState('')
-  const [file, setFile] = useState<SupabaseFile>()
-  const [hasPermission, setHasPermission] = useState<boolean>()
-  const [_, requestPermission] = ImagePicker.useMediaLibraryPermissions();
+  const media = useMediaFile()
 
   const displayName = session?.user?.user_metadata?.displayName
   const visible = text.trim() !== "";
 
   const onCreatePost = useCallback((text: string) => () => {
     setLoading(l => ({ ...l, post: true }))
-    createPost({ user_id: session?.user?.id, content: text }, file)
+    createPost({ user_id: session?.user?.id, content: text }, media.file)
       .then(({ error }) => {
         if (error) throw error
         setText('')
       })
       .catch(err => toast.message(String(err.message || err)))
       .finally(() => setLoading(l => ({ ...l, post: false })))
-  }, [file])
+  }, [media.file])
 
 
   const onCreateFile = useCallback(async () => {
     try {
-      if (hasPermission === undefined) {
-        const result = await requestPermission()
-        if (!result.granted) {
-          toast.message('Sorry, we need camera roll permissions to make this work!')
-          return;
-        }
-        setHasPermission(result.granted)
-      }
-      const document = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 1,
-      })
-      if (document.canceled) return;
-      const _file: SupabaseFile = {
-        uri: document.assets[0].uri as string,
-        name: document.assets[0].fileName as string,
-        type: document.assets[0]?.mimeType as string,
-      }
-      setFile(_file)
+      await media.uploadFile()
     } catch (err: any) {
       toast.message(String(err.message || err))
     }
@@ -103,25 +82,25 @@ const HeaderIndex = memo(function HeaderIndex(props: Props) {
             entering={SlideInRight.duration(500)}
             exiting={SlideOutRight.duration(500)}
           >
-            {hasPermission !== false ?
+            {media.hasPermission !== false ?
               <Fragment>
-                {file ?
+                {media.file ?
                   <MaterialCommunityIcons
                     name={'close'}
                     size={px(30)}
                     color={colors.tertiary}
-                    onPress={() => setFile(undefined)}
+                    onPress={media.reset}
                     style={styles.close}
                   /> :
                   null
                 }
                 <IconButton
                   size={px(40)}
-                  icon={!file ?
+                  icon={!media.file ?
                     'image-plus' :
                     () => (
                       <Image
-                        source={{ uri: file?.uri }}
+                        source={{ uri: media.file?.uri }}
                         style={styles.image}
                       />
                     )

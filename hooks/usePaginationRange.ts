@@ -7,8 +7,11 @@ type Props = {
 
 export function usePaginationRange(props: Props) {
   const { itemsPerPage } = props;
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+
+  const [update, setUpdate] = useState<number>(0)
 
   const from = (currentPage - 1) * itemsPerPage;
   const to = from + itemsPerPage - 1;
@@ -17,24 +20,21 @@ export function usePaginationRange(props: Props) {
   const nextPage = () => {
     if (cantFetch) {
       setCurrentPage(currentPage + 1);
+      setUpdate(update + 1)
     }
-  }
-
-  const refresh = () => {
-    setCurrentPage(1);
-    setTotalItems(0);
   }
 
   const reset = () => {
     setCurrentPage(1);
     setTotalItems(0);
+    setUpdate(update + 1)
   }
 
   return {
     setTotalItems,
     nextPage,
-    refresh,
     reset,
+    update,
     from,
     to,
     currentPage,
