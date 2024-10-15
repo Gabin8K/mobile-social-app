@@ -1,33 +1,30 @@
-import React, { useCallback, useState } from 'react'
-import { Image, StyleSheet, View, ViewProps } from 'react-native'
+import React, { Fragment, useCallback, useState } from 'react'
+import { Image, NativeSyntheticEvent, StyleSheet, TextInputContentSizeChangeEventData, View, ViewProps } from 'react-native'
 import { Avatar, Button, Card, IconButton, Text, TextInput } from 'react-native-paper'
 import { px } from '@/utils/size'
 import { router, usePathname } from 'expo-router'
-import { createComment, createReply, ListOfPostQuery, updateLikes } from '@/services/supabase'
+import { createReply, ListOfPostQuery, updateLikes } from '@/services/supabase'
 import useToast from '@/hooks/useToast'
 import useAuth from '@/hooks/useAuth'
 import { LikeParam, LikeState } from '@/types'
-import { AntDesign } from '@expo/vector-icons'
-import Animated, { LinearTransition, SlideInLeft } from 'react-native-reanimated'
+import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons'
+import Animated, { LinearTransition, SlideInLeft, SlideInRight, SlideOutRight } from 'react-native-reanimated'
 import useTheme from '@/hooks/useTheme'
 import { useRefreshTabs } from '@/providers/RefreshTabsProvider'
+import useMediaFile from '@/hooks/useMediaFile'
 
 type Props = ViewProps & {
   index: number,
   show?: boolean,
-  myPost?: boolean,
   post: ListOfPostQuery[number],
   onShow?: (id?: string) => void,
 }
 
-type Response = {
-  data?: any
-  error?: any
-}
+
 
 
 const PostComponent = (props: Props) => {
-  const { index, post, show, myPost, onShow, style, ...rest } = props
+  const { index, post, show, onShow, style, ...rest } = props
 
   const profile = post.profiles as any
   const avatar_name = profile.display_name.slice(0, 2)
@@ -37,6 +34,7 @@ const PostComponent = (props: Props) => {
   const { theme: { colors } } = useTheme()
   const pathname = usePathname()
 
+  const media = useMediaFile()
   const refreshTabs = useRefreshTabs()
 
   const [loading, setLoading] = useState(false)
@@ -47,6 +45,8 @@ const PostComponent = (props: Props) => {
     isLiked: post.is_liked,
     loading: false
   })
+
+  const visible = text.trim() !== "";
 
   const onGoToComment = () => {
     router.navigate({
@@ -95,21 +95,15 @@ const PostComponent = (props: Props) => {
   const onSubmit = useCallback(async () => {
     setLoading(true)
     try {
-      let response: Response;
-      if (myPost) {
-        response = await createReply({
+      const response = await createReply(
+        {
           content: text,
           user_id: session?.user.id,
           parent_id: null,
           post_id: post?.id,
-        })
-      } else {
-        response = await createComment({
-          user_id: session?.user?.id,
-          post_id: post.id,
-          content: text
-        })
-      }
+        },
+        media.file
+      )
       if (response.error) throw response.error
       setText('')
       onShow?.(undefined)
@@ -119,7 +113,22 @@ const PostComponent = (props: Props) => {
     } finally {
       setLoading(false)
     }
-  }, [text])
+  }, [text, media.file])
+
+
+  const onCreateFile = useCallback(async () => {
+    try {
+      await media.uploadFile()
+    } catch (err: any) {
+      toast.message(String(err.message || err))
+    }
+  }, [])
+
+
+  const onContentSizeChange = useCallback((e: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
+    const height = e.nativeEvent.contentSize.height + px(10)
+    e.target.setNativeProps({ height })
+  }, [])
 
 
 
@@ -176,7 +185,7 @@ const PostComponent = (props: Props) => {
             </View>
           </View>
           {show ?
-            <View style={styles.row3}>
+            <View style={styles.rowInput}>
               <TextInput
                 autoFocus
                 multiline
@@ -185,13 +194,56 @@ const PostComponent = (props: Props) => {
                 style={styles.input}
                 onChangeText={setText}
                 disabled={loading}
+                onContentSizeChange={onContentSizeChange}
               />
-              <IconButton
-                icon={'send'}
-                loading={loading}
-                disabled={loading || text.trim() === ''}
-                onPress={onSubmit}
-              />
+              {visible ?
+                <Animated.View
+                  style={styles.rowIcons}
+                  entering={SlideInRight.duration(500)}
+                  exiting={SlideOutRight.duration(500)}
+                >
+                  {media.hasPermission !== false ?
+                    <Fragment>
+                      {media.file ?
+                        <MaterialCommunityIcons
+                          name={'close'}
+                          size={px(30)}
+                          color={colors.tertiary}
+                          disabled={loading}
+                          onPress={media.reset}
+                          style={styles.close}
+                        /> :
+                        null
+                      }
+                      <IconButton
+                        size={px(35)}
+                        icon={!media.file ?
+                          'image-plus' :
+                          () => (
+                            <Image
+                              source={{ uri: media.file?.uri }}
+                              style={styles.imageIcon}
+                            />
+                          )
+                        }
+                        disabled={loading}
+                        onPress={onCreateFile}
+                        style={{ margin: 0 }}
+                      />
+                    </Fragment> :
+                    null
+                  }
+                  <IconButton
+                    size={px(35)}
+                    icon={'send'}
+                    loading={loading}
+                    disabled={loading}
+                    onPress={onSubmit}
+                    style={{ margin: 0 }}
+                  />
+                </Animated.View> :
+                null
+              }
             </View> :
             null
           }
@@ -221,7 +273,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    maxHeight: px(90),
+    height: px(100),
     justifyContent: 'center',
     fontSize: px(25),
   },
@@ -236,5 +288,34 @@ const styles = StyleSheet.create({
     height: px(350),
     marginTop: px(20),
     objectFit: 'contain',
+  },
+  rowInput: {
+    marginHorizontal: px(30),
+    paddingBottom: px(20),
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  rowIcons: {
+    position: 'absolute',
+    right: 0,
+    top: px(20),
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  blank: {
+    width: px(230),
+    height: px(20)
+  },
+  imageIcon: {
+    width: px(60),
+    height: px(60),
+    objectFit: 'contain'
+  },
+  close: {
+    position: 'absolute',
+    top: px(-15),
+    left: px(40),
+    zIndex: 1,
   }
 })

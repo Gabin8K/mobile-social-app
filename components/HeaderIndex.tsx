@@ -104,6 +104,7 @@ const HeaderIndex = memo(function HeaderIndex(props: Props) {
                     name={'close'}
                     size={px(30)}
                     color={colors.tertiary}
+                    disabled={loading.post}
                     onPress={media.reset}
                     style={styles.close}
                   /> :

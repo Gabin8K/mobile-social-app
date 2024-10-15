@@ -123,6 +123,7 @@ const ReplyField = memo(function ReplyField() {
                       name={'close'}
                       size={px(30)}
                       color={colors.tertiary}
+                      disabled={loading}
                       onPress={media.reset}
                       style={styles.close}
                     /> :
