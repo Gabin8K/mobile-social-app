@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState } from "react";
 import { Tables } from "@/services/database.types";
+import { SupabaseFile } from "@/types";
 
 type State = {
   parent_id?: string,
   profile?: Tables<'profiles'>,
-  currentSubComment?: Tables<'comment'>,
+  currentSubComment?: Tables<'comment'> & { file?: SupabaseFile },
 }
 
 type ReplyContextType = {

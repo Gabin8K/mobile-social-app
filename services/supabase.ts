@@ -36,9 +36,9 @@ export const createPost = async (post: Partial<Tables<'post'>>, file?: SupabaseF
     const response = await uploadFile(file, _post.user_id as string, _post.id as string)
     if (response.error) throw response.error;
     await supabase.from('post')
-    .update({ image_path: response.data?.path as string })
-    .eq('id', _post.id)
-    .select()
+      .update({ image_path: response.data?.path as string })
+      .eq('id', _post.id)
+      .select()
   }
   return {
     data,
@@ -59,9 +59,20 @@ export const createComment = async (comment: Partial<Tables<'comment'>>) => {
 }
 
 
-export const createRepy = async (comment: Partial<Tables<'comment'>>) => {
+export const createReply = async (comment: Partial<Tables<'comment'>>, file?: SupabaseFile) => {
   const { data, error } = await supabase.from('comment').insert(comment)
     .select();
+
+    if (file) {
+      const _comment = data?.[0] as SubComment[number];
+      const response = await uploadFile(file, _comment.user_id as string, _comment.id as string)
+      if (response.error) throw response.error;
+      await supabase.from('comment')
+        .update({ image_path: response.data?.path as string })
+        .eq('id', _comment.id)
+        .select()
+    }
+
   return {
     data: data?.[0] as Tables<'comment'>,
     error,
@@ -197,6 +208,7 @@ export type GetRecursiveComment = {
     user_id: string,
     parent_id: string,
     content: string,
+    image_url ?: string,
     created_at: Date,
     like_count: number,
     is_liked: boolean,
@@ -221,6 +233,7 @@ export const getRecursiveCommentById = async (user_id: string, parent_id: string
   })
   const mappingWithCount = data?.map(async (datum: any) => ({
     ...datum,
+    image_url: datum.image_path ? (await supabase.storage.from('post_bucket').createSignedUrl(datum.image_path, 60 * 60)).data?.signedUrl : undefined,
     like_count: (await supabase.from('likes').select('*', { count: 'exact', head: true }).eq('comment_id', datum.id)).count,
     is_liked: !!(
       await supabase.from('likes')
@@ -253,6 +266,7 @@ export const getParentRecursiveCommentById = async (user_id: string, post_id: st
   })
   const mappingWithCount = data?.map(async (datum: any) => ({
     ...datum,
+    image_url: datum.image_path ? (await supabase.storage.from('post_bucket').createSignedUrl(datum.image_path, 60 * 60)).data?.signedUrl : undefined,
     like_count: (await supabase.from('likes').select('*', { count: 'exact', head: true }).eq('comment_id', datum.id)).count,
     is_liked: !!(
       await supabase.from('likes')
@@ -286,6 +300,7 @@ export const getRecursiveCommentByPostId = async (user_id: string, post_id: stri
   })
   const mappingWithCount = data?.map(async (datum: any) => ({
     ...datum,
+    image_url: datum.image_path ? (await supabase.storage.from('post_bucket').createSignedUrl(datum.image_path, 60 * 60)).data?.signedUrl : undefined,
     like_count: (await supabase.from('likes').select('*', { count: 'exact', head: true }).eq('comment_id', datum.id)).count,
     is_liked: !!(
       await supabase.from('likes')

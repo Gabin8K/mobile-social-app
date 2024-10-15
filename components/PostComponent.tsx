@@ -3,7 +3,7 @@ import { Image, StyleSheet, View, ViewProps } from 'react-native'
 import { Avatar, Button, Card, IconButton, Text, TextInput } from 'react-native-paper'
 import { px } from '@/utils/size'
 import { router, usePathname } from 'expo-router'
-import { createComment, createRepy, ListOfPostQuery, updateLikes } from '@/services/supabase'
+import { createComment, createReply, ListOfPostQuery, updateLikes } from '@/services/supabase'
 import useToast from '@/hooks/useToast'
 import useAuth from '@/hooks/useAuth'
 import { LikeParam, LikeState } from '@/types'
@@ -97,7 +97,7 @@ const PostComponent = (props: Props) => {
     try {
       let response: Response;
       if (myPost) {
-        response = await createRepy({
+        response = await createReply({
           content: text,
           user_id: session?.user.id,
           parent_id: null,

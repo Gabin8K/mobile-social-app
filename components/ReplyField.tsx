@@ -1,14 +1,16 @@
-import { memo, useCallback, useState } from "react";
+import { Fragment, memo, useCallback, useState } from "react";
 import { IconButton, Text, TextInput } from "react-native-paper";
 import { useReply } from "./ReplyContext";
 import { px } from "@/utils/size";
-import { createRepy } from "@/services/supabase";
+import { createReply } from "@/services/supabase";
 import useToast from "@/hooks/useToast";
 import useAuth from "@/hooks/useAuth";
 import { useLocalSearchParams } from "expo-router";
-import { StyleSheet, View } from "react-native";
-import Animated, { SlideInDown, SlideOutDown, useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated";
+import { Image, StyleSheet, View } from "react-native";
+import Animated, { SlideInDown, SlideInRight, SlideOutDown, SlideOutRight, useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated";
 import useTheme from "@/hooks/useTheme";
+import useMediaFile from "@/hooks/useMediaFile";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 
 
@@ -20,9 +22,11 @@ const ReplyField = memo(function ReplyField() {
 
   const { theme: { colors }, mode } = useTheme()
   const keyboard = useAnimatedKeyboard()
+  const media = useMediaFile()
 
   const [loading, setLoading] = useState(false)
   const [text, setText] = useState('')
+  const visible = text.trim() !== "";
 
   const onRequestClose = () => {
     reply?.closeModal()
@@ -30,25 +34,41 @@ const ReplyField = memo(function ReplyField() {
 
   const onSubmit = useCallback(() => {
     setLoading(true)
-    createRepy({
-      content: text,
-      user_id: session?.user.id,
-      parent_id: reply.state?.parent_id as string,
-      post_id: post_id as string,
-    })
+    createReply(
+      {
+        content: text,
+        user_id: session?.user.id,
+        parent_id: reply.state?.parent_id as string,
+        post_id: post_id as string,
+      },
+      media.file
+    )
       .then(({ data, error }) => {
         if (error) throw error
         reply.setState({
           profile: undefined,
           parent_id: undefined,
           // Cette donnée est utilisée pour mettre a jour le commentaire récemment ajouté dans <ReplyComponent />
-          currentSubComment: data
+          currentSubComment: {
+            ...data,
+            file: media.file
+          }
         })
         setText('')
       })
       .catch(err => toast.message(String(err.message || err)))
       .finally(() => setLoading(false))
-  }, [text, post_id, reply])
+  }, [text, post_id, reply, media.file])
+
+
+
+  const onCreateFile = useCallback(async () => {
+    try {
+      await media.uploadFile()
+    } catch (err: any) {
+      toast.message(String(err.message || err))
+    }
+  }, [])
 
 
   const uas = useAnimatedStyle(() => {
@@ -81,13 +101,55 @@ const ReplyField = memo(function ReplyField() {
         />
       </View>
       <View style={styles.content}>
-        <TextInput
-          autoFocus
-          multiline
-          onChangeText={setText}
-          placeholder={'Typing...'}
-          style={styles.input}
-        />
+        <View style={styles.rowInput}>
+          <TextInput
+            autoFocus
+            multiline
+            onChangeText={setText}
+            placeholder={'Typing...'}
+            style={styles.input}
+            right={<View style={styles.blank} />}
+          />
+          {visible ?
+            <Animated.View
+              style={styles.rowIcons}
+              entering={SlideInRight.duration(500)}
+              exiting={SlideOutRight.duration(500)}
+            >
+              {media.hasPermission !== false ?
+                <Fragment>
+                  {media.file ?
+                    <MaterialCommunityIcons
+                      name={'close'}
+                      size={px(30)}
+                      color={colors.tertiary}
+                      onPress={media.reset}
+                      style={styles.close}
+                    /> :
+                    null
+                  }
+                  <IconButton
+                    size={px(40)}
+                    icon={!media.file ?
+                      'image-plus' :
+                      () => (
+                        <Image
+                          source={{ uri: media.file?.uri }}
+                          style={styles.image}
+                        />
+                      )
+                    }
+                    disabled={loading}
+                    onPress={onCreateFile}
+                    style={{ margin: 0 }}
+                  />
+                </Fragment> :
+                null
+              }
+            </Animated.View> :
+            null
+          }
+        </View>
         <IconButton
           mode={'contained'}
           icon={'send'}
@@ -108,17 +170,45 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rowInput: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
   input: {
     flex: 1,
-    height: px(50),
+    minHeight: px(120),
     justifyContent: 'center',
+  },
+  rowIcons: {
+    position: 'absolute',
+    right: px(10),
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  blank: {
+    width: px(130),
+    height: px(20)
+  },
+  close: {
+    position: 'absolute',
+    top: px(-15),
+    left: px(40),
+    zIndex: 1,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between'
-  }
+  },
+  image: {
+    width: px(60),
+    height: px(60),
+    objectFit: 'contain'
+  },
 })
 
 

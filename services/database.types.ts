@@ -14,6 +14,7 @@ export type Database = {
           content: string | null
           created_at: string | null
           id: string
+          image_path: string | null
           parent_id: string | null
           post_id: string
           user_id: string
@@ -22,6 +23,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
+          image_path?: string | null
           parent_id?: string | null
           post_id: string
           user_id: string
@@ -30,6 +32,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           id?: string
+          image_path?: string | null
           parent_id?: string | null
           post_id?: string
           user_id?: string
@@ -195,6 +198,7 @@ export type Database = {
           id: string
           user_id: string
           content: string
+          image_path: string
           created_at: string
           count: number
           display_name: string
@@ -211,6 +215,7 @@ export type Database = {
           id: string
           user_id: string
           content: string
+          image_path: string
           created_at: string
           count: number
           display_name: string
@@ -227,6 +232,7 @@ export type Database = {
           id: string
           user_id: string
           content: string
+          image_path: string
           created_at: string
           count: number
           display_name: string

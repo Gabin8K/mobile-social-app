@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { ListRenderItemInfo, StyleSheet, View } from 'react-native'
+import { Image, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { Avatar, Button, Card, Text } from 'react-native-paper'
 import { px } from '@/utils/size'
 import useTheme from '@/hooks/useTheme'
@@ -110,6 +110,7 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
         ...(reply.state.currentSubComment as any),
         display_name: session?.user?.user_metadata?.displayName ?? '',
         email: session?.user?.user_metadata?.email ?? '',
+        image_url: reply.state.currentSubComment?.file?.uri,
         count: 1,
         child: {
           count: 0,
@@ -117,7 +118,7 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
         }
       }
       setSubComments(sub => sub ?
-        [...sub, { ...subComment, count: sub?.[0]?.count ?? 1 }] :
+        [{ ...subComment, count: sub?.[0]?.count ?? 1 }, ...sub] :
         [subComment]
       )
     }
@@ -153,12 +154,22 @@ const ReplyComponent = memo(function ReplyComponent(props: Props) {
           />
         </View>
         <View style={{ flex: 1 }}>
-          <Card elevation={1}>
+          <Card
+            elevation={1}
+            style={styles.card}
+          >
             <Card.Content>
               <Text>
                 {comment?.content}
               </Text>
             </Card.Content>
+            {comment?.image_url ?
+              <Image
+                source={{ uri: comment.image_url }}
+                style={[styles.image, { backgroundColor: 'rgba(0,0,0,0.1)' }]}
+              /> :
+              null
+            }
           </Card>
           <View style={styles.footer}>
             <View style={styles.row2}>
@@ -235,6 +246,9 @@ const styles = StyleSheet.create({
     columnGap: px(10),
     paddingTop: px(20),
   },
+  card: {
+    paddingBottom: px(30),
+  },
   leftContainer: {
     alignItems: 'center',
     rowGap: px(5),
@@ -284,5 +298,11 @@ const styles = StyleSheet.create({
   },
   child: {
     paddingLeft: px(50),
+  },
+  image: {
+    width: '100%',
+    height: px(200),
+    marginTop: px(20),
+    objectFit: 'contain',
   }
 })
