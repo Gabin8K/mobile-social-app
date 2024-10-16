@@ -79,8 +79,12 @@ const HeaderIndex = memo(function HeaderIndex(props: Props) {
       entering={SlideInUp.duration(500)}
     >
       <Avatar.Text
-        size={px(100)}
+        size={px(104)}
         label={`${displayName?.charAt?.(0) ?? ''}${displayName?.charAt?.(1) ?? ''}`}
+        style={{
+          borderWidth: px(4),
+          borderColor: colors.tertiary,
+        }}
       />
       <View style={styles.rowInput}>
         <TextInput

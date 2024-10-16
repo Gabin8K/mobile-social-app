@@ -10,12 +10,14 @@
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "rgb(155, 68, 39)"
     },
     "ios": {
+      "bundleIdentifier": "com.gabindjm.comments",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.gabindjm.comments",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
