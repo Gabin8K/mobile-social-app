@@ -15,7 +15,7 @@ web-build/
 
 # firebase
 google-services.json
-./supabase/fuctions/service-account.json
+*/service-account.json
 
 # Environment
 .env
