@@ -2,6 +2,3 @@
 .branches
 .temp
 .env
-
-# firebase
-./functions/service-account.json
