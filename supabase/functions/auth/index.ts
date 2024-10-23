@@ -1,6 +1,7 @@
 /* eslint-disable import/no-unresolved */
+
 import { Application, Context, Router } from 'https://deno.land/x/oak@v11.1.0/mod.ts'
-import common from './common.ts';
+import common from '../common.ts';
 
 
 const app = new Application()

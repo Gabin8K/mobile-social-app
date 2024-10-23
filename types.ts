@@ -33,7 +33,11 @@ export type ConfirmResetPassword = {
 }
 
 export type SupabaseFile = {
-  uri:any,
+  uri: any,
   name: string,
   type: string,
+}
+
+export type Setting = {
+  has_save_expo_push_token?: boolean,
 }

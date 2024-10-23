@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, PostgrestError, QueryData } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
 import { Tables } from './database.types';
-import { ConfirmResetPassword, LikeField, LikeParam, Page, SupabaseFile } from '@/types';
+import { ConfirmResetPassword, LikeField, LikeParam, Page, Setting, SupabaseFile } from '@/types';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ADMIN_KEY as string;
@@ -349,6 +349,28 @@ export const confirmPassword = async (body: ConfirmResetPassword) => {
   }
   const error = await response.json();
   return { data: null, error }
+}
+
+
+
+export const saveDeviceToken = async (user_id: string, token: string) => {
+  const setting: Setting = JSON.parse(await AsyncStorage.getItem('setting') ?? '{}');
+  if (setting.has_save_expo_push_token) {
+    return {
+      data: null,
+      error: null
+    }
+  }
+  const { data, error } = await supabase.from('profiles')
+    .update({ expo_push_token: token })
+    .eq('id', user_id);
+  if (!error) {
+    await AsyncStorage.setItem('setting', JSON.stringify({ ...setting, has_save_expo_push_token: true }))
+  }
+  return {
+    data,
+    error,
+  }
 }
 
 

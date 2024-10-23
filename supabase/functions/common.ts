@@ -2,12 +2,17 @@
 
 import nodemailer from 'npm:nodemailer@6.9.10'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { JWT } from 'npm:google-auth-library@9'
+
+type AccessTokenParams = {
+  clientEmail: string
+  privateKey: string
+}
 
 const supabaseConnection = () => createClient(
   Deno.env.get('SB_URL') ?? '',
   Deno.env.get('SB_KEY') ?? ''
 )
-
 
 const transport = nodemailer.createTransport({
   host: Deno.env.get('SMTP_HOSTNAME')!,
@@ -29,12 +34,36 @@ async function sendEmail(to: string, subject: string, html: string) {
 }
 
 
+const getAccessToken = ({ clientEmail, privateKey }: AccessTokenParams): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const jwtClient = new JWT({
+      email: clientEmail,
+      key: privateKey,
+      scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+    })
+    jwtClient.authorize((err, tokens) => {
+      if (err) {
+        reject(err)
+        return
+      }
+      resolve(tokens!.access_token!)
+    })
+  })
+}
+
+
+
 const mailer = {
   sendEmail
 }
 
+const fcm = {
+  getAccessToken
+}
+
 
 export default {
+  supabaseConnection,
   mailer,
-  supabaseConnection
+  fcm
 }
