@@ -355,17 +355,18 @@ export const confirmPassword = async (body: ConfirmResetPassword) => {
 
 export const saveDeviceToken = async (user_id: string, token: string) => {
   const setting: Setting = JSON.parse(await AsyncStorage.getItem('setting') ?? '{}');
-  if (setting.has_save_expo_push_token) {
+  
+  if (setting.has_push_token) {
     return {
       data: null,
       error: null
     }
   }
   const { data, error } = await supabase.from('profiles')
-    .update({ expo_push_token: token })
+    .update({ push_token: token })
     .eq('id', user_id);
   if (!error) {
-    await AsyncStorage.setItem('setting', JSON.stringify({ ...setting, has_save_expo_push_token: true }))
+    await AsyncStorage.setItem('setting', JSON.stringify({ ...setting, has_push_token: true }))
   }
   return {
     data,

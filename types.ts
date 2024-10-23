@@ -39,5 +39,5 @@ export type SupabaseFile = {
 }
 
 export type Setting = {
-  has_save_expo_push_token?: boolean,
+  has_push_token?: boolean,
 }

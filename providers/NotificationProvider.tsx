@@ -26,6 +26,22 @@ async function registerForPushNotificationsAsync() {
       lightColor: '#9b4427',
     });
   }
+  await Notifications.setNotificationCategoryAsync('reply_comment', [
+    {
+      identifier: 'ignore',
+      buttonTitle: 'ignore',
+      options: {
+        opensAppToForeground: false
+      }
+    },
+    {
+      identifier: 'reply',
+      buttonTitle: 'Reply',
+      options: {
+        opensAppToForeground: true
+      }
+    }
+  ])
 
   if (Device.isDevice) {
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -58,7 +74,7 @@ export default function NotificationProvider() {
   const responseListener = useRef<Notifications.Subscription>();
 
   useEffect(() => {
-    if(!user) return;
+    if (!user) return;
     registerForPushNotificationsAsync()
       .then(token => saveDeviceToken(user.id as string, token))
       .catch((err: any) => toast.message(String(err.message || err)));
@@ -68,7 +84,7 @@ export default function NotificationProvider() {
     });
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-    //  TODO: handle notification response
+      //  TODO: handle notification response
     });
 
     return () => {

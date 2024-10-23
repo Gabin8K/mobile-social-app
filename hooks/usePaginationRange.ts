@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 type Props = {
   itemsPerPage: number;
@@ -17,18 +17,18 @@ export function usePaginationRange(props: Props) {
   const to = from + itemsPerPage - 1;
   const cantFetch = currentPage * itemsPerPage < totalItems;
 
-  const nextPage = () => {
+  const nextPage = useCallback(() => {
     if (cantFetch) {
-      setCurrentPage(currentPage + 1);
+      setCurrentPage(current => current + 1);
       setUpdate(prev => !prev)
     }
-  }
+  }, [cantFetch])
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setCurrentPage(1);
     setTotalItems(0);
     setUpdate(prev => !prev)
-  }
+  }, [])
 
   return {
     setTotalItems,

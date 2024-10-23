@@ -16,7 +16,8 @@ const ConfigProvider: FunctionComponent<PropsWithChildren> = ({ children }) => {
     const launch = async () => {
       if (Platform.OS === 'android') {
         await NavigationBar.setPositionAsync('absolute')
-        await NavigationBar.setBackgroundColorAsync('transparent')
+        await NavigationBar.setBackgroundColorAsync("#ffffff01")
+        await NavigationBar.setButtonStyleAsync('dark')
       }
     }
     launch()

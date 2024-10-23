@@ -8,8 +8,6 @@
     "scheme": "com.gabindjm.comments",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
       "backgroundColor": "#9b4427"
     },
     "ios": {
