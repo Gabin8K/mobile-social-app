@@ -13,8 +13,8 @@ export interface WebhookPayload {
 }
 
 export interface CommentNotification {
-  old_comment_id: string,
-  old_post_id: string,
+  old_comment_id: string | null,
+  old_post_id: string | null,
   new_comment_id: string,
   type: 'post' | 'comment',
 }

@@ -41,3 +41,10 @@ export type SupabaseFile = {
 export type Setting = {
   has_push_token?: boolean,
 }
+
+export interface CommentNotification {
+  old_comment_id: string,
+  old_post_id: string,
+  new_comment_id: string,
+  type: 'post' | 'comment',
+}

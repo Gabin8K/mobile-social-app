@@ -26,23 +26,27 @@ const pushRouter = {
     const payload: CommentNotification = await request.json()
     try {
       const table = `old_${payload.type}_id`;
+      const key_value = payload[table as keyof CommentNotification];
       const old_comment = await supabase.from(payload.type).select(
         `
         id,
         profiles(push_token) 
       `
-      ).eq('id', table).single();
-      const new_comment = await supabase.from('comments').select(
+      ).eq('id', (key_value) as string).single();
+      const new_comment = await supabase.from('comment').select(
         `
         id,
-        comment,
-        profiles(id, email, displaname)
+        content,
+        profiles(id, email, display_name)
         
       `).eq('id', payload.new_comment_id).single();
 
       if (old_comment.error || new_comment.error) throw new Error('Comment or Post not found')
 
-      const fcmToken = old_comment.data.profiles[0].push_token as string
+      const profiles = (old_comment.data.profiles as any) as typeof old_comment.data.profiles[number];
+      if (!profiles.push_token) throw new Error('User not allow push notification');
+
+      const fcmToken = profiles.push_token as string
       const accessToken = await common.fcm.getAccessToken({
         clientEmail: serviceAccount.client_email,
         privateKey: serviceAccount.private_key,
@@ -58,8 +62,8 @@ const pushRouter = {
           message: {
             token: fcmToken,
             notification: {
-              title: new_comment.data.profiles[0].displaname,
-              body: new_comment.data.comment,
+              title: (new_comment.data.profiles as any).display_name,
+              body: new_comment.data.content,
             },
             data: {
               categoryId: 'reply_comment',

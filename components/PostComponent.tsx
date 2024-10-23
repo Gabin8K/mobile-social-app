@@ -97,10 +97,13 @@ const PostComponent = (props: Props) => {
     try {
       const response = await createReply(
         {
+         comment:{
           content: text,
           user_id: session?.user.id,
           parent_id: null,
           post_id: post?.id,
+         },
+         type: 'post',
         },
         media.file
       )

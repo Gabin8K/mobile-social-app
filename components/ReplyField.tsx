@@ -36,10 +36,13 @@ const ReplyField = memo(function ReplyField() {
     setLoading(true)
     createReply(
       {
-        content: text,
-        user_id: session?.user.id,
-        parent_id: reply.state?.parent_id as string,
-        post_id: post_id as string,
+        comment:{
+          content: text,
+          user_id: session?.user.id,
+          parent_id: reply.state?.parent_id as string,
+          post_id: post_id as string,
+        },
+        type: 'comment'
       },
       media.file
     )

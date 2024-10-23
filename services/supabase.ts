@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, PostgrestError, QueryData } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
 import { Tables } from './database.types';
-import { ConfirmResetPassword, LikeField, LikeParam, Page, Setting, SupabaseFile } from '@/types';
+import { CommentNotification, ConfirmResetPassword, LikeField, LikeParam, Page, Setting, SupabaseFile } from '@/types';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ADMIN_KEY as string;
@@ -48,9 +48,12 @@ export const createPost = async (post: Partial<Tables<'post'>>, file?: SupabaseF
 
 
 
+type CommentArg = {
+  comment: Partial<Tables<'comment'>>,
+  type?: 'comment' | 'post'
+};
 
-
-export const createReply = async (comment: Partial<Tables<'comment'>>, file?: SupabaseFile) => {
+export const createReply = async ({ comment, type }: CommentArg, file?: SupabaseFile) => {
   const { data, error } = await supabase.from('comment').insert(comment)
     .select();
 
@@ -62,6 +65,17 @@ export const createReply = async (comment: Partial<Tables<'comment'>>, file?: Su
       .update({ image_path: response.data?.path as string })
       .eq('id', _comment.id)
       .select()
+  }
+  try {
+    const commentNotification: CommentNotification = {
+      new_comment_id: data?.[0].id,
+      old_comment_id: (type === 'post' ? null : comment.parent_id) as any,
+      old_post_id: (type === 'comment' ? null : comment.post_id) as any,
+      type: comment.post_id ? 'post' : 'comment',
+    }
+    console.log({ commentNotification })
+    await sendCommentNotification(commentNotification)
+  } catch (error) {
   }
 
   return {
@@ -355,7 +369,7 @@ export const confirmPassword = async (body: ConfirmResetPassword) => {
 
 export const saveDeviceToken = async (user_id: string, token: string) => {
   const setting: Setting = JSON.parse(await AsyncStorage.getItem('setting') ?? '{}');
-  
+
   if (setting.has_push_token) {
     return {
       data: null,
@@ -388,6 +402,25 @@ export const uploadFile = async (file: SupabaseFile, user_id: string, post_id: s
     data,
     error,
   };
+}
+
+
+
+export const sendCommentNotification = async (comment: CommentNotification) => {
+  const response = await fetch(
+    `${process.env.EXPO_PUBLIC_SUPABASE_FUNCTION_PUSH_URL}/reply-comment`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(comment)
+    })
+
+  if (response.ok) {
+    const data = await response.json();
+    return { data, error: null }
+  }
+  const error = await response.json();
+  return { data: null, error }
 }
 
 
