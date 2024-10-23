@@ -28,8 +28,8 @@ async function registerForPushNotificationsAsync() {
   }
   await Notifications.setNotificationCategoryAsync('reply_comment', [
     {
-      identifier: 'ignore',
-      buttonTitle: 'ignore',
+      identifier: 'see',
+      buttonTitle: 'Go to Comment',
       options: {
         opensAppToForeground: false
       }
@@ -37,8 +37,12 @@ async function registerForPushNotificationsAsync() {
     {
       identifier: 'reply',
       buttonTitle: 'Reply',
+      textInput: {
+        placeholder: 'Type your reply here',
+        submitButtonTitle: 'Send',
+      },
       options: {
-        opensAppToForeground: true
+        opensAppToForeground: true,
       }
     }
   ])
@@ -84,6 +88,7 @@ export default function NotificationProvider() {
     });
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log(response)
       //  TODO: handle notification response
     });
 
