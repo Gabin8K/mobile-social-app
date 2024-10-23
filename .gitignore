@@ -13,6 +13,9 @@ web-build/
 # macOS
 .DS_Store
 
+# firebase
+google-services.json
+
 # Environment
 .env
 .env.local
